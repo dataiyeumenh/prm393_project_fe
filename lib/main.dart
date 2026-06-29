@@ -3,11 +3,14 @@ import 'package:provider/provider.dart';
 
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'services/api_service.dart';
 import 'state/auth_state.dart';
 import 'state/cart_state.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ApiService.init();
   runApp(const PawFuelApp());
 }
 

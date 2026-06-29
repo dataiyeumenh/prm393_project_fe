@@ -2,19 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 
-import '../../data/mock_data.dart';
+import '../../models/api/product_dto.dart';
 import '../../models/product.dart';
+import '../../services/product_service.dart';
 import '../../state/cart_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/disclosure_row.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/promo_badge.dart';
-import '../../widgets/product_card.dart';
 
 class ProductDetailScreen extends StatefulWidget {
-  const ProductDetailScreen({super.key, required this.product});
+  const ProductDetailScreen({
+    super.key,
+    this.product,
+    this.productId,
+  });
 
-  final Product product;
+  final Product? product;
+  final String? productId;
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -22,24 +27,92 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _imageIndex = 0;
-  String? _selectedColorway;
   int _quantity = 1;
   bool _favorite = false;
+  bool _loading = true;
+  ProductDetailDTO? _productDetail;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    if (widget.product.colorways.isNotEmpty) {
-      _selectedColorway = widget.product.colorways.first;
+    if (widget.product != null) {
+      _loading = false;
+    } else if (widget.productId != null) {
+      _loadProduct();
     }
   }
 
+  Future<void> _loadProduct() async {
+    if (widget.productId == null) return;
+    
+    final result = await ProductService.getProductById(widget.productId!);
+    if (mounted) {
+      if (result.isSuccess && result.data != null) {
+        setState(() {
+          _productDetail = result.data;
+          _loading = false;
+        });
+      } else {
+        setState(() {
+          _error = result.error ?? 'Failed to load product';
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  bool get _isFromApi => widget.product == null && _productDetail != null;
+  String get _name => _isFromApi ? _productDetail!.name : widget.product!.name;
+  String? get _brandName => _isFromApi ? _productDetail!.brandName : widget.product!.brand;
+  double get _price => _isFromApi ? _productDetail!.price : widget.product!.price;
+  String get _description => _isFromApi ? (_productDetail!.description ?? '') : widget.product!.description;
+  int get _stockQuantity => _isFromApi ? _productDetail!.stockQuantity : widget.product!.stock;
+  List<String> get _images {
+    if (_isFromApi) {
+      return _productDetail!.images.map((img) => img.imageUrl).toList();
+    }
+    return widget.product!.images;
+  }
+  String? get _subtitle => _isFromApi ? _productDetail!.categoryName : widget.product!.subtitle;
+
   @override
   Widget build(BuildContext context) {
-    final p = widget.product;
-    final related = MockData.products
-        .where((x) => x.categoryId == p.categoryId && x.id != p.id)
-        .toList();
+    if (_loading) {
+      return Scaffold(
+        backgroundColor: AppColors.canvas,
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        backgroundColor: AppColors.canvas,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: AppColors.mute),
+              const SizedBox(height: 16),
+              Text(_error!, style: AppTypography.bodyMd),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _loading = true;
+                    _error = null;
+                  });
+                  _loadProduct();
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final images = _images;
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
@@ -88,32 +161,39 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         height: 380,
                         child: Stack(
                           children: [
-                            PageView(
-                              onPageChanged: (i) =>
-                                  setState(() => _imageIndex = i),
-                              children: [
-                                for (final url in p.images)
-                                  CachedNetworkImage(
-                                    imageUrl: url,
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    placeholder: (_, _) => const Center(
-                                      child: CircularProgressIndicator(
-                                        color: AppColors.mute,
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                    errorWidget: (_, _, _) => const Center(
-                                      child: Icon(
-                                        Icons.pets,
-                                        size: 64,
-                                        color: AppColors.stone,
-                                      ),
+                            images.isNotEmpty
+                                ? PageView(
+                                    onPageChanged: (i) =>
+                                        setState(() => _imageIndex = i),
+                                    children: images.map((url) {
+                                      return CachedNetworkImage(
+                                        imageUrl: url,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        placeholder: (_, _) => const Center(
+                                          child: CircularProgressIndicator(
+                                            color: AppColors.mute,
+                                            strokeWidth: 2,
+                                          ),
+                                        ),
+                                        errorWidget: (_, _, _) => const Center(
+                                          child: Icon(
+                                            Icons.pets,
+                                            size: 64,
+                                            color: AppColors.stone,
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  )
+                                : const Center(
+                                    child: Icon(
+                                      Icons.image,
+                                      size: 64,
+                                      color: AppColors.stone,
                                     ),
                                   ),
-                              ],
-                            ),
-                            if (p.images.length > 1)
+                            if (images.length > 1)
                               Positioned(
                                 bottom: 16,
                                 right: 16,
@@ -128,21 +208,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                         BorderRadius.circular(AppRadius.lg),
                                   ),
                                   child: Text(
-                                    '${_imageIndex + 1} / ${p.images.length}',
+                                    '${_imageIndex + 1} / ${images.length}',
                                     style: AppTypography.captionSm,
                                   ),
-                                ),
-                              ),
-                            if (p.badges.isNotEmpty)
-                              Positioned(
-                                top: 16,
-                                left: 16,
-                                child: Wrap(
-                                  spacing: 6,
-                                  children: [
-                                    for (final b in p.badges)
-                                      PromoBadge(label: b),
-                                  ],
                                 ),
                               ),
                           ],
@@ -153,191 +221,86 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              p.brand.toUpperCase(),
-                              style: AppTypography.captionSm.copyWith(
-                                color: AppColors.mute,
-                                letterSpacing: 1.5,
+                            if (_brandName != null)
+                              Text(
+                                _brandName!.toUpperCase(),
+                                style: AppTypography.captionSm.copyWith(
+                                  color: AppColors.mute,
+                                  letterSpacing: 1.5,
+                                ),
                               ),
-                            ),
                             const SizedBox(height: 6),
-                            Text(p.name, style: AppTypography.headingXl),
-                            const SizedBox(height: 4),
-                            Text(
-                              p.subtitle,
-                              style: AppTypography.bodyMd
-                                  .copyWith(color: AppColors.mute),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                for (var i = 0; i < 5; i++)
-                                  Icon(
-                                    i < p.rating.round()
-                                        ? Icons.star
-                                        : Icons.star_border,
-                                    color: AppColors.star,
-                                    size: 18,
-                                  ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '${p.rating}',
-                                  style: AppTypography.bodyStrong,
-                                ),
-                                Text(
-                                  '  ·  ${p.reviewCount} reviews',
-                                  style: AppTypography.captionMd
-                                      .copyWith(color: AppColors.mute),
-                                ),
-                              ],
-                            ),
+                            Text(_name, style: AppTypography.headingXl),
+                            if (_subtitle != null) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                _subtitle!,
+                                style: AppTypography.bodyMd
+                                    .copyWith(color: AppColors.mute),
+                              ),
+                            ],
                             const SizedBox(height: 16),
                             Row(
                               children: [
-                                if (p.onSale)
-                                  Text(
-                                    '\$${p.price.toStringAsFixed(2)}',
-                                    style: AppTypography.headingLg
-                                        .copyWith(color: AppColors.sale),
-                                  )
-                                else
-                                  Text(
-                                    '\$${p.price.toStringAsFixed(2)}',
-                                    style: AppTypography.headingLg,
+                                Text(
+                                  '\$${_price.toStringAsFixed(0)}',
+                                  style: AppTypography.headingLg,
+                                ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
                                   ),
-                                if (p.onSale) ...[
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    '\$${p.originalPrice!.toStringAsFixed(2)}',
-                                    style: AppTypography.bodyMd.copyWith(
-                                      color: AppColors.mute,
-                                      decoration: TextDecoration.lineThrough,
+                                  decoration: BoxDecoration(
+                                    color: _stockQuantity > 0
+                                        ? AppColors.success.withValues(alpha: 0.1)
+                                        : AppColors.sale.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(AppRadius.full),
+                                  ),
+                                  child: Text(
+                                    _stockQuantity > 0
+                                        ? '$_stockQuantity in stock'
+                                        : 'Out of stock',
+                                    style: AppTypography.captionSm.copyWith(
+                                      color: _stockQuantity > 0
+                                          ? AppColors.success
+                                          : AppColors.sale,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  PromoBadge(
-                                    label: '-${p.discountPercent}%',
-                                    color: AppColors.sale,
-                                  ),
-                                ],
+                                ),
                               ],
                             ),
                           ],
                         ),
                       ),
-                      if (p.colorways.isNotEmpty)
-                        Padding(
-                          padding:
-                              const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'FLAVOR: ${_selectedColorway?.toUpperCase() ?? ''}',
-                                style: AppTypography.captionMd,
-                              ),
-                              const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 12,
-                                runSpacing: 12,
-                                children: [
-                                  for (final c in p.colorways)
-                                    GestureDetector(
-                                      onTap: () => setState(
-                                          () => _selectedColorway = c),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 18,
-                                          vertical: 10,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: _selectedColorway == c
-                                              ? AppColors.ink
-                                              : AppColors.canvas,
-                                          borderRadius:
-                                              BorderRadius.circular(
-                                                  AppRadius.lg),
-                                          border: Border.all(
-                                            color: _selectedColorway == c
-                                                ? AppColors.ink
-                                                : AppColors.hairline,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          c,
-                                          style: AppTypography.buttonSm
-                                              .copyWith(
-                                            color: _selectedColorway == c
-                                                ? AppColors.onPrimary
-                                                : AppColors.ink,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
                       const SizedBox(height: 12),
                       const Divider(height: 1, color: AppColors.hairline),
-                      Padding(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 20),
-                        child: DisclosureRow(
-                          label: 'View Product Details',
-                          initiallyOpen: true,
-                          child: Text(
-                            p.description,
-                            style: AppTypography.bodyMd
-                                .copyWith(color: AppColors.charcoal),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 20),
-                        child: DisclosureRow(
-                          label: 'Ingredients',
-                          child: Text(
-                            p.ingredients.isEmpty
-                                ? 'Information not available.'
-                                : p.ingredients,
-                            style: AppTypography.bodyMd
-                                .copyWith(color: AppColors.charcoal),
-                          ),
-                        ),
-                      ),
-                      if (p.nutrition.isNotEmpty)
+                      if (_description.isNotEmpty)
                         Padding(
                           padding:
                               const EdgeInsets.symmetric(horizontal: 20),
                           child: DisclosureRow(
-                            label: 'Nutrition',
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                for (final entry in p.nutrition.entries)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 4),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          entry.key,
-                                          style: AppTypography.captionMd,
-                                        ),
-                                        Text(
-                                          entry.value,
-                                          style: AppTypography.bodyStrong,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                              ],
+                            label: 'Product Details',
+                            initiallyOpen: true,
+                            child: Text(
+                              _description,
+                              style: AppTypography.bodyMd
+                                  .copyWith(color: AppColors.charcoal),
+                            ),
+                          ),
+                        ),
+                      if (_isFromApi && _productDetail!.sku != null)
+                        Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 20),
+                          child: DisclosureRow(
+                            label: 'SKU',
+                            child: Text(
+                              _productDetail!.sku!,
+                              style: AppTypography.bodyMd
+                                  .copyWith(color: AppColors.charcoal),
                             ),
                           ),
                         ),
@@ -354,84 +317,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ),
                         ),
                       ),
-                      Padding(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 20),
-                        child: DisclosureRow(
-                          label: 'Reviews (${p.reviewCount})',
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              for (var i = 0; i < 3; i++)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 16),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          for (var s = 0; s < 5; s++)
-                                            Icon(
-                                              s < 5 - i
-                                                  ? Icons.star
-                                                  : Icons.star_border,
-                                              color: AppColors.star,
-                                              size: 14,
-                                            ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            ['Jordan M.', 'Sam K.', 'Avery L.'][i],
-                                            style: AppTypography.bodyStrong,
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        [
-                                          'My pet absolutely loves this. Will definitely repurchase.',
-                                          'Great quality and my vet recommended it. Highly recommend.',
-                                          'A bit pricey but the ingredients are top notch.',
-                                        ][i],
-                                        style: AppTypography.bodyMd.copyWith(
-                                          color: AppColors.charcoal,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (related.isNotEmpty) ...[
-                        const SizedBox(height: AppSpacing.section),
-                        const SectionHeader(title: 'YOU MAY ALSO LIKE'),
-                        SizedBox(
-                          height: 280,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: related.length,
-                            separatorBuilder: (_, _) =>
-                                const SizedBox(width: 8),
-                            itemBuilder: (_, i) => SizedBox(
-                              width: 180,
-                              child: ProductCard(
-                                product: related[i],
-                                onTap: () => Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                    builder: (_) => ProductDetailScreen(
-                                      product: related[i],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
                       const SizedBox(height: 120),
                     ],
                   ),
@@ -492,13 +377,33 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: PrimaryButton(
-                        label:
-                            p.stock > 0 ? 'Add to Bag  •  \$${(p.price * _quantity).toStringAsFixed(2)}' : 'Notify Me',
+                        label: _stockQuantity > 0
+                            ? 'Add to Bag  •  \$${(_price * _quantity).toStringAsFixed(0)}'
+                            : 'Notify Me',
                         expand: true,
-                        icon: p.stock > 0 ? Icons.shopping_bag_outlined : Icons.notifications_none,
+                        icon: _stockQuantity > 0
+                            ? Icons.shopping_bag_outlined
+                            : Icons.notifications_none,
                         onPressed: () {
-                          if (p.stock > 0) {
-                            context.read<CartState>().add(p, qty: _quantity);
+                          if (_stockQuantity > 0) {
+                            context.read<CartState>().add(
+                              widget.product ?? Product(
+                                id: _productDetail!.id,
+                                name: _productDetail!.name,
+                                subtitle: _productDetail!.categoryName ?? '',
+                                categoryId: '',
+                                petType: PetType.dog,
+                                price: _productDetail!.price,
+                                imageUrl: _productDetail!.primaryImageUrl ?? '',
+                                images: _productDetail!.images.map((e) => e.imageUrl).toList(),
+                                rating: 4.5,
+                                reviewCount: 100,
+                                brand: _productDetail!.brandName ?? '',
+                                weightGrams: 0,
+                                stock: _productDetail!.stockQuantity,
+                              ),
+                              qty: _quantity,
+                            );
                             ScaffoldMessenger.of(context).hideCurrentSnackBar();
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -513,7 +418,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
-                                        'Added $_quantity × ${p.name} to bag.',
+                                        'Added $_quantity × $_name to bag.',
                                         style: AppTypography.captionMd
                                             .copyWith(color: AppColors.onPrimary),
                                       ),
@@ -531,7 +436,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(
+                                content: const Text(
                                   'We\'ll notify you when it\'s back.',
                                 ),
                                 behavior: SnackBarBehavior.floating,

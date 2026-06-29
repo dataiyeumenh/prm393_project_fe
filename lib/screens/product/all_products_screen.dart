@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../data/mock_data.dart';
-import '../../models/product.dart';
+import '../../models/api/product_dto.dart';
+import '../../services/product_service.dart';
 import '../../state/cart_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/filter_chip_pill.dart';
 import '../../widgets/app_background.dart';
-import '../../widgets/product_card.dart';
 import '../../widgets/scroll_to_top_fab.dart';
 import '../cart/cart_screen.dart';
 import 'product_detail_screen.dart';
 
 class AllProductsScreen extends StatefulWidget {
-  const AllProductsScreen({super.key, this.initialCategory});
+  const AllProductsScreen({super.key, this.initialCategoryId, this.categoryName});
 
-  final ProductCategory? initialCategory;
+  final int? initialCategoryId;
+  final String? categoryName;
 
   @override
   State<AllProductsScreen> createState() => _AllProductsScreenState();
 }
 
-enum _SortOption { featured, priceLow, priceHigh, topRated }
+enum _SortOption { featured, priceLow, priceHigh }
 
 extension on _SortOption {
   String get label {
@@ -32,32 +32,54 @@ extension on _SortOption {
         return 'Price ↑';
       case _SortOption.priceHigh:
         return 'Price ↓';
-      case _SortOption.topRated:
-        return 'Top Rated';
+    }
+  }
+
+  String get apiSortBy {
+    switch (this) {
+      case _SortOption.featured:
+        return 'createdAt';
+      case _SortOption.priceLow:
+        return 'price';
+      case _SortOption.priceHigh:
+        return 'price';
+    }
+  }
+
+  String get apiSortDir {
+    switch (this) {
+      case _SortOption.featured:
+        return 'DESC';
+      case _SortOption.priceLow:
+        return 'ASC';
+      case _SortOption.priceHigh:
+        return 'DESC';
     }
   }
 }
 
 class _AllProductsScreenState extends State<AllProductsScreen> {
-  static const int _pageSize = 6;
+  static const int _pageSize = 10;
 
   final _searchCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
-  String _selectedCategoryId = 'all';
-  Set<PetType> _selectedPetTypes = {};
-  bool _onSaleOnly = false;
+  int? _selectedCategoryId;
   _SortOption _sort = _SortOption.featured;
   bool _showScrollTop = false;
-  int _visibleCount = _pageSize;
+  
+  List<ProductSummaryDTO> _products = [];
+  bool _loading = true;
+  bool _loadingMore = false;
+  bool _hasMore = true;
+  int _currentPage = 0;
+  int _totalElements = 0;
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialCategory != null) {
-      _selectedCategoryId = widget.initialCategory!.id;
-      _selectedPetTypes = {widget.initialCategory!.petType};
-    }
+    _selectedCategoryId = widget.initialCategoryId;
     _scrollCtrl.addListener(_onScroll);
+    _loadProducts();
   }
 
   void _onScroll() {
@@ -65,17 +87,61 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
     if (shouldShow != _showScrollTop) {
       setState(() => _showScrollTop = shouldShow);
     }
-    // Infinite scroll
     if (_scrollCtrl.position.pixels >=
         _scrollCtrl.position.maxScrollExtent - 240) {
       _loadMore();
     }
   }
 
+  Future<void> _loadProducts({bool reset = false}) async {
+    if (_loading && !reset) return;
+    
+    setState(() {
+      if (reset) {
+        _loading = true;
+        _products = [];
+        _currentPage = 0;
+      }
+    });
+
+    final result = await ProductService.getProducts(
+      categoryId: _selectedCategoryId,
+      page: reset ? 0 : _currentPage,
+      size: _pageSize,
+      sortBy: _sort.apiSortBy,
+      sortDir: _sort.apiSortDir,
+    );
+
+    if (mounted && result.isSuccess && result.data != null) {
+      setState(() {
+        if (reset) {
+          _products = result.data!.content;
+        } else {
+          _products.addAll(result.data!.content);
+        }
+        _hasMore = !result.data!.last;
+        _totalElements = result.data!.totalElements;
+        _loading = false;
+        _loadingMore = false;
+      });
+    } else {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   void _loadMore() {
-    final total = _filtered.length;
-    if (_visibleCount >= total) return;
-    setState(() => _visibleCount = (_visibleCount + _pageSize).clamp(0, total));
+    if (_loadingMore || !_hasMore) return;
+    setState(() => _loadingMore = true);
+    _currentPage++;
+    _loadProducts();
+  }
+
+  void _onFilterChange() {
+    setState(() {
+      _currentPage = 0;
+      _hasMore = true;
+    });
+    _loadProducts(reset: true);
   }
 
   @override
@@ -87,49 +153,12 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
     super.dispose();
   }
 
-  List<Product> get _filtered {
-    final q = _searchCtrl.text.trim().toLowerCase();
-    var list = MockData.products.where((p) {
-      if (_selectedCategoryId != 'all' && p.categoryId != _selectedCategoryId) {
-        return false;
-      }
-      if (_selectedPetTypes.isNotEmpty &&
-          !_selectedPetTypes.contains(p.petType)) {
-        return false;
-      }
-      if (_onSaleOnly && !p.onSale) return false;
-      if (q.isNotEmpty) {
-        return p.name.toLowerCase().contains(q) ||
-            p.subtitle.toLowerCase().contains(q) ||
-            p.brand.toLowerCase().contains(q);
-      }
-      return true;
-    }).toList();
-
-    switch (_sort) {
-      case _SortOption.featured:
-        break;
-      case _SortOption.priceLow:
-        list.sort((a, b) => a.price.compareTo(b.price));
-        break;
-      case _SortOption.priceHigh:
-        list.sort((a, b) => b.price.compareTo(a.price));
-        break;
-      case _SortOption.topRated:
-        list.sort((a, b) => b.rating.compareTo(a.rating));
-        break;
-    }
-    return list;
-  }
-
   void _reset() {
     setState(() {
-      _selectedCategoryId = 'all';
-      _selectedPetTypes = {};
-      _onSaleOnly = false;
+      _selectedCategoryId = null;
       _sort = _SortOption.featured;
-      _visibleCount = _pageSize;
     });
+    _onFilterChange();
   }
 
   void _openFilters() {
@@ -142,30 +171,21 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
             BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
       builder: (_) => _FilterSheet(
-        categories: MockData.categories,
         selectedCategoryId: _selectedCategoryId,
-        onCategory: (id) => setState(() => _selectedCategoryId = id),
-        selectedPetTypes: _selectedPetTypes,
-        onPetType: (t) => setState(() {
-          if (_selectedPetTypes.contains(t)) {
-            _selectedPetTypes.remove(t);
-          } else {
-            _selectedPetTypes.add(t);
-          }
-        }),
-        onSaleOnly: _onSaleOnly,
-        onToggleSale: (v) => setState(() => _onSaleOnly = v),
+        onCategory: (id) {
+          setState(() => _selectedCategoryId = id);
+        },
         onReset: _reset,
+        onApply: () {
+          Navigator.pop(context);
+          _onFilterChange();
+        },
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _filtered;
-    final total = filtered.length;
-    final shown = filtered.take(_visibleCount).toList();
-    final hasMore = _visibleCount < total;
     final cartCount = context.watch<CartState>().itemCount;
 
     return Scaffold(
@@ -180,24 +200,27 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
             elevation: 0,
             scrolledUnderElevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: AppColors.ink),
+              icon: Icon(Icons.arrow_back, color: AppColors.ink),
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
-              widget.initialCategory?.name ?? 'All Products',
+              widget.categoryName ?? 'All Products',
               style: AppTypography.headingLg,
             ),
             actions: [
               IconButton(
-                icon: const Icon(Icons.search, color: AppColors.ink),
+                icon: Icon(Icons.search, color: AppColors.ink),
                 onPressed: () {
                   showSearch(
                     context: context,
-                    delegate: _InlineSearchDelegate(
-                      controller: _searchCtrl,
-                      onChanged: () => setState(() {
-                        _visibleCount = _pageSize;
-                      }),
+                    delegate: _ProductSearchDelegate(
+                      onProductSelected: (product) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ProductDetailScreen(productId: product.id),
+                          ),
+                        );
+                      },
                     ),
                   );
                 },
@@ -214,7 +237,7 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
                       child: _PillButton(
                         icon: Icons.tune,
                         label: 'Filters',
-                        active: _hasActiveFilter,
+                        active: _selectedCategoryId != null,
                         onTap: _openFilters,
                       ),
                     ),
@@ -233,76 +256,78 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
             ),
           ),
         ],
-        body: filtered.isEmpty
-            ? _EmptyState(onReset: _reset)
-            : Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                    child: Row(
-                      children: [
-                        Text(
-                          '$total results',
-                          style: AppTypography.captionMd
-                              .copyWith(color: AppColors.mute),
-                        ),
-                        const Spacer(),
-                        if (widget.initialCategory != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.accentPinkSoft,
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.full),
+        body: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _products.isEmpty
+                ? _EmptyState(onReset: _reset)
+                : Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                        child: Row(
+                          children: [
+                            Text(
+                              '$_totalElements results',
+                              style: AppTypography.captionMd
+                                  .copyWith(color: AppColors.mute),
                             ),
-                            child: Text(
-                              widget.initialCategory!.name,
-                              style: AppTypography.captionSm.copyWith(
-                                color: AppColors.accentPinkDeep,
-                                fontWeight: FontWeight.w600,
+                            const Spacer(),
+                            if (widget.categoryName != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.accentPinkSoft,
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.full),
+                                ),
+                                child: Text(
+                                  widget.categoryName!,
+                                  style: AppTypography.captionSm.copyWith(
+                                    color: AppColors.accentPinkDeep,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: GridView.builder(
-                      controller: _scrollCtrl,
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 18,
-                        childAspectRatio: 0.58,
+                          ],
+                        ),
                       ),
-                      itemCount: shown.length + (hasMore ? 1 : 0),
-                      itemBuilder: (_, i) {
-                        if (i >= shown.length) {
-                          return const _LoadMoreTile();
-                        }
-                        final p = shown[i];
-                        return ProductCard(
-                          product: p,
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => ProductDetailScreen(product: p),
-                            ),
+                      Expanded(
+                        child: GridView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 18,
+                            childAspectRatio: 0.58,
                           ),
-                        );
-                      },
-                    ),
+                          itemCount: _products.length + (_hasMore ? 1 : 0),
+                          itemBuilder: (_, i) {
+                            if (i >= _products.length) {
+                              return const _LoadMoreTile();
+                            }
+                            final p = _products[i];
+                            return _ApiProductCard(
+                              product: p,
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => ProductDetailScreen(productId: p.id),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      if (_hasMore)
+                        _PaginationFooter(
+                          shown: _products.length,
+                          total: _totalElements,
+                          hasMore: _hasMore,
+                          onLoadMore: _loadMore,
+                        ),
+                    ],
                   ),
-                  _PaginationFooter(
-                    shown: shown.length,
-                    total: total,
-                    hasMore: hasMore,
-                    onLoadMore: _loadMore,
-                  ),
-                ],
-              ),
       )),
       floatingActionButton: _FabStack(
         showScrollTop: _showScrollTop,
@@ -319,11 +344,6 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
-
-  bool get _hasActiveFilter =>
-      _selectedCategoryId != 'all' ||
-      _selectedPetTypes.isNotEmpty ||
-      _onSaleOnly;
 
   Future<void> _pickSort() async {
     final picked = await showModalBottomSheet<_SortOption>(
@@ -351,7 +371,7 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
               (o) => ListTile(
                 title: Text(o.label, style: AppTypography.bodyStrong),
                 trailing: _sort == o
-                    ? const Icon(Icons.check, color: AppColors.accentPinkDeep)
+                    ? Icon(Icons.check, color: AppColors.accentPinkDeep)
                     : null,
                 onTap: () => Navigator.of(ctx).pop(o),
               ),
@@ -362,11 +382,136 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
       ),
     );
     if (picked != null) {
-      setState(() {
-        _sort = picked;
-        _visibleCount = _pageSize;
-      });
+      setState(() => _sort = picked);
+      _onFilterChange();
     }
+  }
+}
+
+class _ApiProductCard extends StatelessWidget {
+  const _ApiProductCard({
+    required this.product,
+    required this.onTap,
+  });
+
+  final ProductSummaryDTO product;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.canvas,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x08000000),
+              blurRadius: 12,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppColors.softCloud,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(AppRadius.md),
+                  ),
+                ),
+                child: product.primaryImageUrl != null
+                    ? ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(AppRadius.md),
+                        ),
+                        child: Image.network(
+                          product.primaryImageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Center(
+                            child: Icon(Icons.image, color: AppColors.mute),
+                          ),
+                        ),
+                      )
+                    : const Center(
+                        child: Icon(Icons.image, color: AppColors.mute, size: 40),
+                      ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.name,
+                      style: AppTypography.bodyStrong.copyWith(
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+                    if (product.brandName != null)
+                      Text(
+                        product.brandName!,
+                        style: AppTypography.captionSm.copyWith(
+                          color: AppColors.mute,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          '\$${product.price.toStringAsFixed(0)}',
+                          style: AppTypography.bodyStrong.copyWith(
+                            color: AppColors.ink,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: product.stockQuantity > 0
+                                ? AppColors.success.withValues(alpha: 0.1)
+                                : AppColors.sale.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            product.stockQuantity > 0 ? 'In stock' : 'Out',
+                            style: AppTypography.utilityXs.copyWith(
+                              color: product.stockQuantity > 0
+                                  ? AppColors.success
+                                  : AppColors.sale,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -461,28 +606,11 @@ class _PaginationFooter extends StatelessWidget {
                   style: AppTypography.captionMd.copyWith(color: AppColors.mute),
                 ),
                 const Spacer(),
-                if (hasMore)
-                  Text(
-                    '${(percent * 100).round()}%',
-                    style: AppTypography.captionSm
-                        .copyWith(color: AppColors.accentPinkDeep),
-                  )
-                else
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.check_circle,
-                        size: 14,
-                        color: AppColors.success,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'All loaded',
-                        style: AppTypography.captionSm
-                            .copyWith(color: AppColors.success),
-                      ),
-                    ],
-                  ),
+                Text(
+                  '${(percent * 100).round()}%',
+                  style: AppTypography.captionSm
+                      .copyWith(color: AppColors.accentPinkDeep),
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -609,38 +737,42 @@ class _FabStack extends StatelessWidget {
   }
 }
 
-class _FilterSheet extends StatelessWidget {
+class _FilterSheet extends StatefulWidget {
   const _FilterSheet({
-    required this.categories,
     required this.selectedCategoryId,
     required this.onCategory,
-    required this.selectedPetTypes,
-    required this.onPetType,
-    required this.onSaleOnly,
-    required this.onToggleSale,
     required this.onReset,
+    required this.onApply,
   });
 
-  final List<ProductCategory> categories;
-  final String selectedCategoryId;
-  final ValueChanged<String> onCategory;
-  final Set<PetType> selectedPetTypes;
-  final ValueChanged<PetType> onPetType;
-  final bool onSaleOnly;
-  final ValueChanged<bool> onToggleSale;
+  final int? selectedCategoryId;
+  final ValueChanged<int?> onCategory;
   final VoidCallback onReset;
+  final VoidCallback onApply;
+
+  @override
+  State<_FilterSheet> createState() => _FilterSheetState();
+}
+
+class _FilterSheetState extends State<_FilterSheet> {
+  int? _tempCategoryId;
+
+  @override
+  void initState() {
+    super.initState();
+    _tempCategoryId = widget.selectedCategoryId;
+  }
 
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.65,
+      initialChildSize: 0.5,
       minChildSize: 0.4,
-      maxChildSize: 0.92,
+      maxChildSize: 0.9,
       expand: false,
       builder: (_, ctrl) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-        child: ListView(
-          controller: ctrl,
+        child: Column(
           children: [
             Center(
               child: Container(
@@ -658,7 +790,10 @@ class _FilterSheet extends StatelessWidget {
                 Text('Filters', style: AppTypography.headingLg),
                 const Spacer(),
                 TextButton(
-                  onPressed: onReset,
+                  onPressed: () {
+                    setState(() => _tempCategoryId = null);
+                    widget.onReset();
+                  },
                   child: Text(
                     'Reset',
                     style: AppTypography.buttonSm
@@ -670,66 +805,29 @@ class _FilterSheet extends StatelessWidget {
             const SizedBox(height: 12),
             Text('Category', style: AppTypography.captionMd),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                FilterChipPill(
-                  label: 'All',
-                  active: selectedCategoryId == 'all',
-                  onTap: () => onCategory('all'),
-                ),
-                for (final c in categories)
-                  FilterChipPill(
-                    label: c.name,
-                    active: selectedCategoryId == c.id,
-                    onTap: () => onCategory(c.id),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Text('Pet type', style: AppTypography.captionMd),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final t in PetType.values)
-                  FilterChipPill(
-                    label: t.label,
-                    icon: t.icon,
-                    active: selectedPetTypes.contains(t),
-                    onTap: () => onPetType(t),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.softCloud,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
+            Expanded(
+              child: ListView(
                 children: [
-                  const Icon(
-                    Icons.local_offer_outlined,
-                    color: AppColors.accentPinkDeep,
+                  FilterChipPill(
+                    label: 'All',
+                    active: _tempCategoryId == null,
+                    onTap: () => setState(() => _tempCategoryId = null),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text('Show only items on sale',
-                        style: AppTypography.bodyStrong),
-                  ),
-                  Switch(
-                    value: onSaleOnly,
-                    activeThumbColor: AppColors.accentPinkDeep,
-                    onChanged: onToggleSale,
-                  ),
+                  const SizedBox(height: 8),
+                  ...['Dry Food', 'Wet Food', 'Treats', 'Cat Litter', 'Bird Seed', 'Fish Food', 'Toys', 'Accessories']
+                      .asMap()
+                      .entries
+                      .map((e) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: FilterChipPill(
+                              label: e.value,
+                              active: _tempCategoryId == e.key + 1,
+                              onTap: () => setState(() => _tempCategoryId = e.key + 1),
+                            ),
+                          )),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
             Material(
               color: AppColors.ink,
               shape: RoundedRectangleBorder(
@@ -737,7 +835,10 @@ class _FilterSheet extends StatelessWidget {
               ),
               child: InkWell(
                 borderRadius: BorderRadius.circular(AppRadius.full),
-                onTap: () => Navigator.of(context).pop(),
+                onTap: () {
+                  widget.onCategory(_tempCategoryId);
+                  widget.onApply();
+                },
                 child: const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
                   child: Center(
@@ -760,14 +861,12 @@ class _FilterSheet extends StatelessWidget {
   }
 }
 
-class _InlineSearchDelegate extends SearchDelegate<String> {
-  _InlineSearchDelegate({
-    required this.controller,
-    required this.onChanged,
-  });
+class _ProductSearchDelegate extends SearchDelegate<ProductSummaryDTO?> {
+  _ProductSearchDelegate({required this.onProductSelected});
 
-  final TextEditingController controller;
-  final VoidCallback onChanged;
+  final void Function(ProductSummaryDTO) onProductSelected;
+  List<ProductSummaryDTO> _results = [];
+  bool _loading = false;
 
   @override
   List<Widget>? buildActions(BuildContext context) {
@@ -777,8 +876,8 @@ class _InlineSearchDelegate extends SearchDelegate<String> {
           icon: const Icon(Icons.clear),
           onPressed: () {
             query = '';
-            controller.text = '';
-            onChanged();
+            _results = [];
+            showSuggestions(context);
           },
         ),
     ];
@@ -788,57 +887,81 @@ class _InlineSearchDelegate extends SearchDelegate<String> {
   Widget? buildLeading(BuildContext context) {
     return IconButton(
       icon: const Icon(Icons.arrow_back),
-      onPressed: () => close(context, ''),
+      onPressed: () => close(context, null),
     );
   }
 
   @override
-  Widget buildResults(BuildContext ctx) => _build(ctx);
+  Widget buildResults(BuildContext context) => _buildSearchResults(context);
 
   @override
-  Widget buildSuggestions(BuildContext ctx) => _build(ctx);
+  Widget buildSuggestions(BuildContext context) => _buildSearchResults(context);
 
-  Widget _build(BuildContext context) {
-    final q = query.trim().toLowerCase();
-    final results = q.isEmpty
-        ? <Product>[]
-        : MockData.products.where((p) {
-            return p.name.toLowerCase().contains(q) ||
-                p.subtitle.toLowerCase().contains(q) ||
-                p.brand.toLowerCase().contains(q);
-          }).toList();
-
-    if (q.isEmpty) {
-      return const Center(
-        child: Text('Type to search…'),
-      );
+  Widget _buildSearchResults(BuildContext context) {
+    if (query.isEmpty) {
+      return const Center(child: Text('Type to search…'));
     }
 
-    if (results.isEmpty) {
-      return const Center(child: Text('No matches'));
-    }
+    return FutureBuilder<List<ProductSummaryDTO>>(
+      future: _searchProducts(query),
+      builder: (context, snapshot) {
+        if (_loading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    return ListView.separated(
-      itemCount: results.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
-      itemBuilder: (_, i) {
-        final p = results[i];
-        return ListTile(
-          title: Text(p.name),
-          subtitle: Text(p.brand),
-          onTap: () {
-            controller.text = p.name;
-            onChanged();
-            close(context, p.name);
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => ProductDetailScreen(product: p),
-              ),
+        if (_results.isEmpty) {
+          return const Center(child: Text('No matches found'));
+        }
+
+        return ListView.separated(
+          itemCount: _results.length,
+          separatorBuilder: (_, _) => const Divider(height: 1),
+          itemBuilder: (_, i) {
+            final p = _results[i];
+            return ListTile(
+              leading: p.primaryImageUrl != null
+                  ? Image.network(
+                      p.primaryImageUrl!,
+                      width: 50,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 50,
+                        color: AppColors.softCloud,
+                        child: const Icon(Icons.image),
+                      ),
+                    )
+                  : Container(
+                      width: 50,
+                      color: AppColors.softCloud,
+                      child: const Icon(Icons.image),
+                    ),
+              title: Text(p.name),
+              subtitle: Text(p.brandName ?? ''),
+              trailing: Text('\$${p.price.toStringAsFixed(0)}'),
+              onTap: () {
+                onProductSelected(p);
+                close(context, p);
+              },
             );
           },
         );
       },
     );
+  }
+
+  Future<List<ProductSummaryDTO>> _searchProducts(String query) async {
+    _loading = true;
+    final result = await ProductService.getProducts(page: 0, size: 20);
+    _loading = false;
+    
+    if (result.isSuccess && result.data != null) {
+      _results = result.data!.content
+          .where((p) =>
+              p.name.toLowerCase().contains(query.toLowerCase()) ||
+              (p.brandName?.toLowerCase().contains(query.toLowerCase()) ?? false))
+          .toList();
+    }
+    return _results;
   }
 }
 
@@ -870,13 +993,13 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'No matches found',
+              'No products found',
               style: AppTypography.headingLg,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Try removing some filters or adjusting your search.',
+              'Try a different filter or category.',
               style: AppTypography.bodyMd.copyWith(color: AppColors.mute),
               textAlign: TextAlign.center,
             ),

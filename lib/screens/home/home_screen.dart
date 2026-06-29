@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../data/mock_data.dart';
-import '../../models/product.dart';
+import '../../models/api/category_dto.dart';
+import '../../models/api/product_dto.dart';
+import '../../services/category_service.dart';
+import '../../services/product_service.dart';
 import '../../state/auth_state.dart';
 import '../../state/cart_state.dart';
 import '../../theme/app_theme.dart';
@@ -10,7 +12,6 @@ import '../../widgets/category_icon_card.dart';
 import '../../widgets/app_background.dart';
 import '../../widgets/hero_banner.dart';
 import '../../widgets/primary_nav_bar.dart';
-import '../../widgets/product_card.dart';
 import '../../widgets/promo_badge.dart';
 import '../../widgets/scroll_to_top_fab.dart';
 import '../cart/cart_screen.dart';
@@ -27,17 +28,54 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _scrollCtrl = ScrollController();
   bool _showScrollTop = false;
+  
+  List<ProductSummaryDTO> _trending = [];
+  List<CategoryDTO> _categories = [];
+  bool _loadingCategories = true;
+  bool _loadingProducts = true;
 
   @override
   void initState() {
     super.initState();
     _scrollCtrl.addListener(_onScroll);
+    _loadData();
   }
 
   void _onScroll() {
     final shouldShow = _scrollCtrl.offset > 320;
     if (shouldShow != _showScrollTop) {
       setState(() => _showScrollTop = shouldShow);
+    }
+  }
+
+  Future<void> _loadData() async {
+    await Future.wait([
+      _loadCategories(),
+      _loadProducts(),
+    ]);
+  }
+
+  Future<void> _loadCategories() async {
+    final result = await CategoryService.getAllCategories();
+    if (mounted && result.isSuccess && result.data != null) {
+      setState(() {
+        _categories = result.data!;
+        _loadingCategories = false;
+      });
+    } else {
+      if (mounted) setState(() => _loadingCategories = false);
+    }
+  }
+
+  Future<void> _loadProducts() async {
+    final result = await ProductService.getProducts(page: 0, size: 10);
+    if (mounted && result.isSuccess && result.data != null) {
+      setState(() {
+        _trending = result.data!.content;
+        _loadingProducts = false;
+      });
+    } else {
+      if (mounted) setState(() => _loadingProducts = false);
     }
   }
 
@@ -52,9 +90,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final user = context.watch<AuthState>().user;
     final cart = context.watch<CartState>();
-    final trending = MockData.trending();
-    final sale = MockData.onSale();
-    final categories = MockData.categories;
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
@@ -105,21 +140,23 @@ class _HomeScreenState extends State<HomeScreen> {
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 116,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: categories.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 12),
-                  itemBuilder: (_, i) {
-                    final c = categories[i];
-                    return CategoryIconCard(
-                      label: c.name,
-                      icon: _categoryIcon(c.id),
-                      color: _categoryColor(c.id),
-                      onTap: () => _openCategory(context, c),
-                    );
-                  },
-                ),
+                child: _loadingCategories
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: _categories.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: 12),
+                        itemBuilder: (_, i) {
+                          final c = _categories[i];
+                          return CategoryIconCard(
+                            label: c.name,
+                            icon: _categoryIcon(i),
+                            color: _categoryColor(i),
+                            onTap: () => _openCategory(context, c),
+                          );
+                        },
+                      ),
               ),
             ),
             SliverToBoxAdapter(
@@ -132,90 +169,95 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 18,
-                  childAspectRatio: 0.58,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (_, i) => ProductCard(
-                    product: trending[i],
-                    onTap: () => _openProduct(context, trending[i]),
+              sliver: _loadingProducts
+                  ? const SliverToBoxAdapter(
+                      child: Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(32),
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                    )
+                  : _trending.isEmpty
+                      ? SliverToBoxAdapter(
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(32),
+                              child: Text(
+                                'No products available',
+                                style: AppTypography.bodyMd.copyWith(color: AppColors.mute),
+                              ),
+                            ),
+                          ),
+                        )
+                      : SliverGrid(
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 18,
+                            childAspectRatio: 0.58,
+                          ),
+                          delegate: SliverChildBuilderDelegate(
+                            (_, i) {
+                              final p = _trending[i];
+                              return _ApiProductCard(
+                                product: p,
+                                onTap: () => _openProductDetail(context, p.id),
+                              );
+                            },
+                            childCount: _trending.length,
+                          ),
+                        ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 36)),
+            SliverToBoxAdapter(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.accentPinkSoft,
+                      AppColors.accentButter,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  childCount: trending.length,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        PromoBadge(label: 'SALE', color: AppColors.saleDeep),
+                        SizedBox(width: 10),
+                        Text(
+                          'Members save more 🐾',
+                          style: TextStyle(
+                            color: AppColors.ink,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    const GradientHeadline(
+                      'Endless\ndeals.',
+                      fontSize: 56,
+                      height: 0.92,
+                    ),
+                  ],
                 ),
               ),
             ),
-            if (sale.isNotEmpty) ...[
-              const SliverToBoxAdapter(child: SizedBox(height: 36)),
-              SliverToBoxAdapter(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [
-                        AppColors.accentPinkSoft,
-                        AppColors.accentButter,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: const [
-                          PromoBadge(label: 'SALE', color: AppColors.saleDeep),
-                          SizedBox(width: 10),
-                          Text(
-                            'Members save more 🐾',
-                            style: TextStyle(
-                              color: AppColors.ink,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      const GradientHeadline(
-                        'Endless\ndeals.',
-                        fontSize: 56,
-                        height: 0.92,
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: 260,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: sale.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(width: 12),
-                          itemBuilder: (_, i) => SizedBox(
-                            width: 200,
-                            child: ProductCard(
-                              product: sale[i],
-                              onTap: () => _openProduct(context, sale[i]),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
             const SliverToBoxAdapter(child: SizedBox(height: 36)),
             SliverToBoxAdapter(
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     colors: [AppColors.gradientStart, AppColors.accentPinkDeep],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -321,58 +363,167 @@ class _HomeScreenState extends State<HomeScreen> {
   void _push(BuildContext context, Widget screen) =>
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
 
-  void _openCategory(BuildContext context, ProductCategory c) {
-    _push(context, AllProductsScreen(initialCategory: c));
+  void _openCategory(BuildContext context, CategoryDTO c) {
+    _push(context, AllProductsScreen(initialCategoryId: c.id, categoryName: c.name));
   }
 
-  void _openProduct(BuildContext context, Product p) {
-    _push(context, ProductDetailScreen(product: p));
+  void _openProductDetail(BuildContext context, String productId) {
+    _push(context, ProductDetailScreen(productId: productId));
   }
 
-  IconData _categoryIcon(String id) {
-    switch (id) {
-      case 'dry-food':
-        return Icons.restaurant;
-      case 'wet-food':
-        return Icons.set_meal;
-      case 'treats':
-        return Icons.cake;
-      case 'cat-litter':
-        return Icons.grass;
-      case 'bird-seed':
-        return Icons.flutter_dash;
-      case 'fish-food':
-        return Icons.water_drop;
-      case 'toys':
-        return Icons.toys;
-      case 'accessories':
-        return Icons.inventory_2;
-      default:
-        return Icons.pets;
-    }
+  IconData _categoryIcon(int index) {
+    final icons = [
+      Icons.restaurant,
+      Icons.set_meal,
+      Icons.cake,
+      Icons.grass,
+      Icons.flutter_dash,
+      Icons.water_drop,
+      Icons.toys,
+      Icons.inventory_2,
+    ];
+    return icons[index % icons.length];
   }
 
-  Color _categoryColor(String id) {
-    switch (id) {
-      case 'dry-food':
-        return AppColors.dogAccentSolid;
-      case 'wet-food':
-        return AppColors.catAccentSolid;
-      case 'treats':
-        return AppColors.treatsAccentSolid;
-      case 'cat-litter':
-        return AppColors.catLitterAccentSolid;
-      case 'bird-seed':
-        return AppColors.birdAccentSolid;
-      case 'fish-food':
-        return AppColors.fishAccentSolid;
-      case 'toys':
-        return AppColors.toysAccentSolid;
-      case 'accessories':
-        return AppColors.accessoriesAccentSolid;
-      default:
-        return AppColors.ink;
-    }
+  Color _categoryColor(int index) {
+    final colors = [
+      AppColors.dogAccentSolid,
+      AppColors.catAccentSolid,
+      AppColors.treatsAccentSolid,
+      AppColors.catLitterAccentSolid,
+      AppColors.birdAccentSolid,
+      AppColors.fishAccentSolid,
+      AppColors.toysAccentSolid,
+      AppColors.accessoriesAccentSolid,
+    ];
+    return colors[index % colors.length];
+  }
+}
+
+class _ApiProductCard extends StatelessWidget {
+  const _ApiProductCard({
+    required this.product,
+    required this.onTap,
+  });
+
+  final ProductSummaryDTO product;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.canvas,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x08000000),
+              blurRadius: 12,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppColors.softCloud,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(AppRadius.md),
+                  ),
+                ),
+                child: product.primaryImageUrl != null
+                    ? ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(AppRadius.md),
+                        ),
+                        child: Image.network(
+                          product.primaryImageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Center(
+                            child: Icon(Icons.image, color: AppColors.mute),
+                          ),
+                        ),
+                      )
+                    : const Center(
+                        child: Icon(Icons.image, color: AppColors.mute),
+                      ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.name,
+                      style: AppTypography.bodyStrong.copyWith(
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+                    if (product.brandName != null)
+                      Text(
+                        product.brandName!,
+                        style: AppTypography.captionSm.copyWith(
+                          color: AppColors.mute,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          '\$${product.price.toStringAsFixed(0)}',
+                          style: AppTypography.bodyStrong.copyWith(
+                            color: AppColors.ink,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: product.stockQuantity > 0
+                                ? AppColors.success.withValues(alpha: 0.1)
+                                : AppColors.sale.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            product.stockQuantity > 0 ? 'In stock' : 'Out',
+                            style: AppTypography.utilityXs.copyWith(
+                              color: product.stockQuantity > 0
+                                  ? AppColors.success
+                                  : AppColors.sale,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -442,7 +593,7 @@ class _SectionHeader extends StatelessWidget {
                         .copyWith(color: AppColors.accentPinkDeep),
                   ),
                   const SizedBox(width: 2),
-                  const Icon(
+                  Icon(
                     Icons.arrow_forward,
                     size: 14,
                     color: AppColors.accentPinkDeep,
@@ -482,8 +633,6 @@ class _HomeFabStack extends StatelessWidget {
   }
 }
 
-/// Same as CartFab but lets parent pass the count directly to avoid duplicate
-/// listeners in tight compositions.
 class CartFabWithBadge extends StatelessWidget {
   const CartFabWithBadge({super.key, required this.count, required this.onTap});
   final int count;
@@ -500,7 +649,7 @@ class CartFabWithBadge extends StatelessWidget {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               colors: [AppColors.gradientStart, AppColors.accentPinkDeep],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
