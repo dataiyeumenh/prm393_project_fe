@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'screens/admin/admin_shell.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'services/api_service.dart';
@@ -39,12 +40,13 @@ class _AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authed = context.watch<AuthState>().isAuthenticated;
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 250),
-      child: authed
-          ? const HomeScreen(key: ValueKey('home'))
-          : const LoginScreen(key: ValueKey('login')),
-    );
+    final auth = context.watch<AuthState>();
+    if (!auth.isAuthenticated) {
+      return const LoginScreen(key: ValueKey('login'));
+    }
+    if (auth.isAdmin) {
+      return const AdminShell(key: ValueKey('admin'));
+    }
+    return const HomeScreen(key: ValueKey('home'));
   }
 }

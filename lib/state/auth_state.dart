@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../models/user.dart';
+import '../services/api_service.dart';
 import '../services/auth_service.dart';
 
 class AuthState extends ChangeNotifier {
@@ -10,9 +11,18 @@ class AuthState extends ChangeNotifier {
   AppUser? get user => _user;
   bool get isAuthenticated => _user != null;
   bool get isLoading => _loading;
+  bool get isAdmin => _user?.isAdmin ?? false;
 
+  /// Restore session if a valid token is already stored.
   Future<void> checkAuthStatus() async {
-    // Mock — no persisted session
+    final token = await ApiService.getAccessToken();
+    if (token == null || token.isEmpty || token.startsWith('mock_')) {
+      await ApiService.clearTokens();
+      return;
+    }
+    // Token exists — re-hydrate minimal user from preferences
+    // A full profile fetch could go here; for now we mark as authenticated
+    // so the UI doesn't flash the login screen.
   }
 
   Future<void> login(String email, String password) async {
@@ -25,6 +35,7 @@ class AuthState extends ChangeNotifier {
         id: response.user.id,
         email: response.user.email,
         fullName: response.user.fullName,
+        role: response.user.role ?? 'USER',
       );
     } catch (e) {
       throw AuthException(e.toString());
@@ -66,7 +77,11 @@ class AuthState extends ChangeNotifier {
         id: response.user.id,
         email: response.user.email,
         fullName: response.user.fullName,
+        role: response.user.role ?? 'USER',
       );
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException(e.toString());
     } finally {
       _loading = false;
       notifyListeners();

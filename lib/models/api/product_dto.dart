@@ -83,7 +83,8 @@ class ProductDetailDTO {
       categoryName: json['categoryName'] as String?,
       brandName: json['brandName'] as String?,
       petTypeName: json['petTypeName'] as String?,
-      images: (json['images'] as List<dynamic>?)
+      images:
+          (json['images'] as List<dynamic>?)
               ?.map((e) => ProductImageDTO.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -117,15 +118,24 @@ class PageResponse<T> {
     Map<String, dynamic> json,
     T Function(Map<String, dynamic>) fromJsonT,
   ) {
+    final rawContent = json['content'] as List<dynamic>? ?? [];
     return PageResponse(
-      content: (json['content'] as List<dynamic>)
+      content: rawContent
           .map((e) => fromJsonT(e as Map<String, dynamic>))
           .toList(),
-      pageNumber: json['pageNumber'] as int,
-      pageSize: json['pageSize'] as int,
-      totalElements: json['totalElements'] as int,
-      totalPages: json['totalPages'] as int,
-      last: json['last'] as bool,
+      pageNumber:
+          json['pageNumber'] as int? ??
+          json['number'] as int? ??
+          json['page'] as int? ??
+          0,
+      pageSize:
+          json['pageSize'] as int? ?? json['size'] as int? ?? rawContent.length,
+      totalElements:
+          json['totalElements'] as int? ??
+          json['totalItems'] as int? ??
+          rawContent.length,
+      totalPages: json['totalPages'] as int? ?? json['pages'] as int? ?? 1,
+      last: json['last'] as bool? ?? json['isLast'] as bool? ?? true,
     );
   }
 }

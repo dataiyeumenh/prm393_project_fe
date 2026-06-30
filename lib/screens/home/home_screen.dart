@@ -28,7 +28,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _scrollCtrl = ScrollController();
   bool _showScrollTop = false;
-  
+
   List<ProductSummaryDTO> _trending = [];
   List<CategoryDTO> _categories = [];
   bool _loadingCategories = true;
@@ -49,10 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadData() async {
-    await Future.wait([
-      _loadCategories(),
-      _loadProducts(),
-    ]);
+    await Future.wait([_loadCategories(), _loadProducts()]);
   }
 
   Future<void> _loadCategories() async {
@@ -97,255 +94,265 @@ class _HomeScreenState extends State<HomeScreen> {
         child: SafeArea(
           bottom: false,
           child: CustomScrollView(
-          controller: _scrollCtrl,
-          slivers: [
-            SliverToBoxAdapter(child: _TopBar(userName: user?.fullName)),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      user == null
-                          ? 'Hello, friend!'
-                          : 'Hi, ${user.fullName.split(' ').first}!',
-                      style: AppTypography.bodyMd
-                          .copyWith(color: AppColors.mute),
-                    ),
-                    const SizedBox(height: 4),
-                    const GradientHeadline(
-                      'Fuel\nyour pet.',
-                      fontSize: 84,
-                      height: 0.88,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 4)),
-            SliverToBoxAdapter(
-              child: HeroBanner(
-                onShopTap: () => _push(context, const AllProductsScreen()),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: _SectionHeader(
-                title: 'Shop by category',
-                emoji: '🐾',
-                linkLabel: 'See all',
-                onLinkTap: () => _push(context, const AllProductsScreen()),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 116,
-                child: _loadingCategories
-                    ? const Center(child: CircularProgressIndicator())
-                    : ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _categories.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 12),
-                        itemBuilder: (_, i) {
-                          final c = _categories[i];
-                          return CategoryIconCard(
-                            label: c.name,
-                            icon: _categoryIcon(i),
-                            color: _categoryColor(i),
-                            onTap: () => _openCategory(context, c),
-                          );
-                        },
-                      ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: _SectionHeader(
-                title: 'Trending now',
-                emoji: '✨',
-                linkLabel: 'Shop all',
-                onLinkTap: () => _push(context, const AllProductsScreen()),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: _loadingProducts
-                  ? const SliverToBoxAdapter(
-                      child: Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(32),
-                          child: CircularProgressIndicator(),
+            controller: _scrollCtrl,
+            slivers: [
+              SliverToBoxAdapter(child: _TopBar(userName: user?.fullName)),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user == null
+                            ? 'Hello, friend!'
+                            : 'Hi, ${user.fullName.split(' ').first}!',
+                        style: AppTypography.bodyMd.copyWith(
+                          color: AppColors.mute,
                         ),
                       ),
-                    )
-                  : _trending.isEmpty
-                      ? SliverToBoxAdapter(
-                          child: Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(32),
-                              child: Text(
-                                'No products available',
-                                style: AppTypography.bodyMd.copyWith(color: AppColors.mute),
-                              ),
-                            ),
-                          ),
-                        )
-                      : SliverGrid(
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 18,
-                            childAspectRatio: 0.58,
-                          ),
-                          delegate: SliverChildBuilderDelegate(
-                            (_, i) {
-                              final p = _trending[i];
-                              return _ApiProductCard(
-                                product: p,
-                                onTap: () => _openProductDetail(context, p.id),
-                              );
-                            },
-                            childCount: _trending.length,
-                          ),
-                        ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 36)),
-            SliverToBoxAdapter(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.accentPinkSoft,
-                      AppColors.accentButter,
+                      const SizedBox(height: 4),
+                      const GradientHeadline(
+                        'Fuel\nyour pet.',
+                        fontSize: 84,
+                        height: 0.88,
+                      ),
                     ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        PromoBadge(label: 'SALE', color: AppColors.saleDeep),
-                        SizedBox(width: 10),
-                        Text(
-                          'Members save more 🐾',
-                          style: TextStyle(
-                            color: AppColors.ink,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    const GradientHeadline(
-                      'Endless\ndeals.',
-                      fontSize: 56,
-                      height: 0.92,
-                    ),
-                  ],
                 ),
               ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 36)),
-            SliverToBoxAdapter(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.gradientStart, AppColors.accentPinkDeep],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
+              const SliverToBoxAdapter(child: SizedBox(height: 4)),
+              SliverToBoxAdapter(
+                child: HeroBanner(
+                  onShopTap: () => _push(context, const AllProductsScreen()),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('🐾', style: TextStyle(fontSize: 32)),
-                    const SizedBox(height: 6),
-                    const GradientHeadline(
-                      'Join the\nPawFuel club.',
-                      fontSize: 56,
-                      height: 0.92,
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFFFFFFFF),
-                          Color(0xFFFFD6E1),
-                          Color(0xFFFFE5B4),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Free shipping on first order. Birthday treats. '
-                      'Early access to drops.',
-                      style: AppTypography.bodyMd.copyWith(
-                        color: AppColors.onPrimary.withValues(alpha: 0.92),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Material(
-                      color: AppColors.canvas,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.full),
-                      ),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(AppRadius.full),
-                        onTap: () {
-                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              backgroundColor: AppColors.ink,
-                              behavior: SnackBarBehavior.floating,
-                              content: Text(
-                                'Welcome to the club! Check your inbox.',
-                                style: AppTypography.captionMd
-                                    .copyWith(color: AppColors.onPrimary),
+              ),
+              SliverToBoxAdapter(
+                child: _SectionHeader(
+                  title: 'Shop by category',
+                  emoji: '🐾',
+                  linkLabel: 'See all',
+                  onLinkTap: () => _push(context, const AllProductsScreen()),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: 116,
+                  child: _loadingCategories
+                      ? const Center(child: CircularProgressIndicator())
+                      : ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _categories.length,
+                          separatorBuilder: (_, _) => const SizedBox(width: 12),
+                          itemBuilder: (_, i) {
+                            final c = _categories[i];
+                            return CategoryIconCard(
+                              label: c.name,
+                              icon: _categoryIcon(i),
+                              color: _categoryColor(i),
+                              onTap: () => _openCategory(context, c),
+                            );
+                          },
+                        ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: _SectionHeader(
+                  title: 'Trending now',
+                  emoji: '✨',
+                  linkLabel: 'Shop all',
+                  onLinkTap: () => _push(context, const AllProductsScreen()),
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: _loadingProducts
+                    ? const SliverToBoxAdapter(
+                        child: Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(32),
+                            child: CircularProgressIndicator(),
+                          ),
+                        ),
+                      )
+                    : _trending.isEmpty
+                    ? SliverToBoxAdapter(
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32),
+                            child: Text(
+                              'No products available',
+                              style: AppTypography.bodyMd.copyWith(
+                                color: AppColors.mute,
                               ),
                             ),
+                          ),
+                        ),
+                      )
+                    : SliverGrid(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 18,
+                              childAspectRatio: 0.58,
+                            ),
+                        delegate: SliverChildBuilderDelegate((_, i) {
+                          final p = _trending[i];
+                          return _ApiProductCard(
+                            product: p,
+                            onTap: () => _openProductDetail(context, p.id),
                           );
-                        },
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 22, vertical: 12),
-                          child: Text(
-                            'Join Us',
+                        }, childCount: _trending.length),
+                      ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 36)),
+              SliverToBoxAdapter(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.accentPinkSoft,
+                        AppColors.accentButter,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          PromoBadge(label: 'SALE', color: AppColors.saleDeep),
+                          SizedBox(width: 10),
+                          Text(
+                            'Members save more 🐾',
                             style: TextStyle(
                               color: AppColors.ink,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      const GradientHeadline(
+                        'Endless\ndeals.',
+                        fontSize: 56,
+                        height: 0.92,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 36)),
+              SliverToBoxAdapter(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.gradientStart,
+                        AppColors.accentPinkDeep,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('🐾', style: TextStyle(fontSize: 32)),
+                      const SizedBox(height: 6),
+                      const GradientHeadline(
+                        'Join the\nPawFuel club.',
+                        fontSize: 56,
+                        height: 0.92,
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFFFFFFFF),
+                            Color(0xFFFFD6E1),
+                            Color(0xFFFFE5B4),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Free shipping on first order. Birthday treats. '
+                        'Early access to drops.',
+                        style: AppTypography.bodyMd.copyWith(
+                          color: AppColors.onPrimary.withValues(alpha: 0.92),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Material(
+                        color: AppColors.canvas,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                          onTap: () {
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                backgroundColor: AppColors.ink,
+                                behavior: SnackBarBehavior.floating,
+                                content: Text(
+                                  'Welcome to the club! Check your inbox.',
+                                  style: AppTypography.captionMd.copyWith(
+                                    color: AppColors.onPrimary,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 22,
+                              vertical: 12,
+                            ),
+                            child: Text(
+                              'Join Us',
+                              style: TextStyle(
+                                color: AppColors.ink,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
                         ),
                       ),
+                    ],
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 36)),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    '© 2026 PawFuel · Made with 🐾 for furry friends',
+                    textAlign: TextAlign.center,
+                    style: AppTypography.utilityXs.copyWith(
+                      color: AppColors.mute,
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 36)),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  '© 2026 PawFuel · Made with 🐾 for furry friends',
-                  textAlign: TextAlign.center,
-                  style: AppTypography.utilityXs.copyWith(color: AppColors.mute),
-                ),
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
-          ],
+              const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            ],
+          ),
         ),
-      )),
+      ),
       floatingActionButton: _HomeFabStack(
         showScrollTop: _showScrollTop,
         onScrollTop: () => _scrollCtrl.animateTo(
@@ -364,7 +371,10 @@ class _HomeScreenState extends State<HomeScreen> {
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
 
   void _openCategory(BuildContext context, CategoryDTO c) {
-    _push(context, AllProductsScreen(initialCategoryId: c.id, categoryName: c.name));
+    _push(
+      context,
+      AllProductsScreen(initialCategoryId: c.id, categoryName: c.name),
+    );
   }
 
   void _openProductDetail(BuildContext context, String productId) {
@@ -401,10 +411,7 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _ApiProductCard extends StatelessWidget {
-  const _ApiProductCard({
-    required this.product,
-    required this.onTap,
-  });
+  const _ApiProductCard({required this.product, required this.onTap});
 
   final ProductSummaryDTO product;
   final VoidCallback onTap;
@@ -531,6 +538,45 @@ class _TopBar extends StatelessWidget {
   const _TopBar({this.userName});
   final String? userName;
 
+  Future<void> _confirmLogout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.canvas,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
+        title: Text(
+          'Log out?',
+          style: AppTypography.headingMd.copyWith(color: AppColors.ink),
+        ),
+        content: Text(
+          'Are you sure you want to log out?',
+          style: AppTypography.bodyMd.copyWith(color: AppColors.mute),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(
+              'Cancel',
+              style: AppTypography.buttonSm.copyWith(color: AppColors.mute),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(
+              'Log out',
+              style: AppTypography.buttonSm.copyWith(color: AppColors.sale),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      await context.read<AuthState>().logout();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -544,6 +590,50 @@ class _TopBar extends StatelessWidget {
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const AllProductsScreen()),
             ),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.person_outline, color: AppColors.ink),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            color: AppColors.canvas,
+            itemBuilder: (_) => [
+              if (userName != null)
+                PopupMenuItem(
+                  enabled: false,
+                  value: 'user',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        userName!,
+                        style: AppTypography.bodyStrong.copyWith(
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      Divider(color: AppColors.hairlineSoft, height: 16),
+                    ],
+                  ),
+                ),
+              PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    const Icon(Icons.logout, size: 18, color: AppColors.sale),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Log out',
+                      style: AppTypography.buttonSm.copyWith(
+                        color: AppColors.sale,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            onSelected: (value) {
+              if (value == 'logout') _confirmLogout(context);
+            },
           ),
         ],
       ),
@@ -589,8 +679,9 @@ class _SectionHeader extends StatelessWidget {
                 children: [
                   Text(
                     linkLabel!,
-                    style: AppTypography.buttonSm
-                        .copyWith(color: AppColors.accentPinkDeep),
+                    style: AppTypography.buttonSm.copyWith(
+                      color: AppColors.accentPinkDeep,
+                    ),
                   ),
                   const SizedBox(width: 2),
                   Icon(
