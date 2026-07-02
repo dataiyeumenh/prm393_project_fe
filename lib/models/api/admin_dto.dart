@@ -96,9 +96,12 @@ class AdminWarehouseProductDTO {
   final String id;
   final String name;
   final String? sku;
+  final String? description;
   final double price;
   final int stockQuantity;
+  final int? categoryId;
   final String? categoryName;
+  final int? brandId;
   final String? brandName;
   final String? primaryImageUrl;
 
@@ -106,14 +109,19 @@ class AdminWarehouseProductDTO {
     required this.id,
     required this.name,
     this.sku,
+    this.description,
     required this.price,
     required this.stockQuantity,
+    this.categoryId,
     this.categoryName,
+    this.brandId,
     this.brandName,
     this.primaryImageUrl,
   });
 
   factory AdminWarehouseProductDTO.fromJson(Map<String, dynamic> json) {
+    final brandObj = json['brand'] as Map<String, dynamic>?;
+    final categoryObj = json['category'] as Map<String, dynamic>?;
     final images = json['images'] as List<dynamic>?;
     String? imageUrl = json['primaryImageUrl'] as String?;
     if (imageUrl == null && images != null && images.isNotEmpty) {
@@ -132,10 +140,28 @@ class AdminWarehouseProductDTO {
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? 'Unknown',
       sku: json['sku'] as String?,
+      description: json['description'] as String?,
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
-      stockQuantity: json['stockQuantity'] as int? ?? 0,
-      categoryName: json['categoryName'] as String?,
-      brandName: json['brandName'] as String?,
+      stockQuantity:
+          (json['stockQuantity'] as num?)?.toInt() ??
+          (json['stock_quantity'] as num?)?.toInt() ??
+          0,
+      categoryId:
+          (json['categoryId'] as num?)?.toInt() ??
+          (json['category_id'] as num?)?.toInt() ??
+          (categoryObj?['id'] as num?)?.toInt(),
+      categoryName:
+          json['categoryName'] as String? ??
+          json['category_name'] as String? ??
+          categoryObj?['name'] as String?,
+      brandId:
+          (json['brandId'] as num?)?.toInt() ??
+          (json['brand_id'] as num?)?.toInt() ??
+          (brandObj?['id'] as num?)?.toInt(),
+      brandName:
+          json['brandName'] as String? ??
+          json['brand_name'] as String? ??
+          brandObj?['name'] as String?,
       primaryImageUrl: imageUrl,
     );
   }

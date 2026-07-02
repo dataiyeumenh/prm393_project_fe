@@ -68,10 +68,31 @@ class AuthState extends ChangeNotifier {
         throw const AuthException('Passwords do not match.');
       }
 
-      final response = await AuthService.register(
+      await AuthService.register(
         fullName: fullName,
         email: email,
         password: password,
+      );
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException(e.toString());
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> verifyOtp({
+    required String email,
+    required String otpCode,
+  }) async {
+    _loading = true;
+    notifyListeners();
+
+    try {
+      final response = await AuthService.verifyOtp(
+        email: email,
+        otpCode: otpCode,
       );
       _user = AppUser(
         id: response.user.id,
@@ -80,11 +101,18 @@ class AuthState extends ChangeNotifier {
         role: response.user.role ?? 'USER',
       );
     } catch (e) {
-      if (e is AuthException) rethrow;
       throw AuthException(e.toString());
     } finally {
       _loading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> resendOtp({required String email}) async {
+    try {
+      await AuthService.resendOtp(email: email);
+    } catch (e) {
+      throw AuthException(e.toString());
     }
   }
 
