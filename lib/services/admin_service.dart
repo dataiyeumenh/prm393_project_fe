@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:dio/dio.dart';
+
 import '../models/api/admin_dto.dart';
 import '../models/api/product_dto.dart';
 import 'api_service.dart';
@@ -150,37 +154,106 @@ class AdminService {
     }
   }
 
+  /// Create product via admin endpoint with multipart/form-data.
+  /// Required form field: 'product' (JSON string). Optional: 'image'.
+  static Future<ApiResult<bool>> createProduct(
+    Map<String, dynamic> product, {
+    MultipartFile? image,
+  }) async {
+    try {
+      final payload = _normalizeProductPayload(product);
+      if (payload.isEmpty) {
+        return ApiResult.fail('No product data provided');
+      }
+
+      final formMap = <String, dynamic>{'product': jsonEncode(payload)};
+      if (image != null) {
+        formMap['image'] = image;
+      }
+
+      final response = await ApiService.dio.post(
+        '/api/v1/admin/products',
+        data: FormData.fromMap(formMap),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return ApiResult.success(true);
+      }
+      return ApiResult.fail(
+        response.data['message'] as String? ?? 'Failed to create product',
+      );
+    } catch (e) {
+      return ApiResult.fail(_extractError(e));
+    }
+  }
+
   /// Update product stock via admin endpoint.
   static Future<ApiResult<bool>> updateProductStock(
     String productId,
     int newStock,
   ) async {
+    return updateProduct(productId, {'stock': newStock});
+  }
+
+  /// Update only requested product fields using multipart/form-data.
+  /// The server expects a form field named "product" containing a JSON string.
+  static Future<ApiResult<bool>> updateProduct(
+    String productId,
+    Map<String, dynamic> updates,
+  ) async {
     try {
-      // Try admin endpoint first, then fallback to general products endpoint
-      final response = await ApiService.dio.patch(
-        '/api/v1/admin/products/$productId/stock',
-        data: {'stockQuantity': newStock},
+      if (updates.isEmpty) {
+        return ApiResult.fail('No fields to update');
+      }
+
+      // Keep only explicitly provided fields and drop null values by default.
+      final sanitized = <String, dynamic>{};
+      updates.forEach((k, v) {
+        if (v != null) sanitized[k] = v;
+      });
+
+      final payload = _normalizeProductPayload(sanitized);
+
+      if (payload.isEmpty) {
+        return ApiResult.fail('No valid fields to update');
+      }
+
+      // PUT multipart/form-data with product JSON string payload.
+      final formData = FormData.fromMap({'product': jsonEncode(payload)});
+
+      final putResp = await ApiService.dio.put(
+        '/api/v1/admin/products/$productId',
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
       );
-      if (response.statusCode == 200 || response.statusCode == 204) {
+      if (putResp.statusCode == 200 || putResp.statusCode == 204) {
         return ApiResult.success(true);
       }
       return ApiResult.fail(
-        response.data['message'] as String? ?? 'Failed to update stock',
+        putResp.data['message'] as String? ?? 'Failed to update product',
       );
-    } catch (_) {
-      // Try PUT on general products endpoint as fallback
-      try {
-        final fallback = await ApiService.dio.put(
-          '/api/v1/products/$productId',
-          data: {'stockQuantity': newStock},
-        );
-        if (fallback.statusCode == 200 || fallback.statusCode == 204) {
-          return ApiResult.success(true);
-        }
-        return ApiResult.fail('Failed to update stock');
-      } catch (e2) {
-        return ApiResult.fail(_extractError(e2));
+    } catch (e) {
+      return ApiResult.fail(_extractError(e));
+    }
+  }
+
+  /// Soft-delete a product via admin endpoint.
+  static Future<ApiResult<bool>> deleteProduct(String productId) async {
+    try {
+      final response = await ApiService.dio.delete(
+        '/api/v1/admin/products/$productId',
+      );
+      if (response.statusCode == 200 ||
+          response.statusCode == 204 ||
+          response.statusCode == 202) {
+        return ApiResult.success(true);
       }
+      return ApiResult.fail(
+        response.data['message'] as String? ?? 'Failed to delete product',
+      );
+    } catch (e) {
+      return ApiResult.fail(_extractError(e));
     }
   }
 
@@ -209,5 +282,33 @@ class AdminService {
       return 'Server error ($code). Please try again.';
     }
     return 'An error occurred. Please try again.';
+  }
+
+  /// Convert UI/internal keys to API update keys.
+  /// Backend update contract uses snake_case for ids and stock quantity.
+  static Map<String, dynamic> _normalizeProductPayload(
+    Map<String, dynamic> input,
+  ) {
+    final out = <String, dynamic>{};
+    input.forEach((key, value) {
+      switch (key) {
+        case 'stock':
+        case 'stockQuantity':
+        case 'stock_quantity':
+          out['stock_quantity'] = value;
+          break;
+        case 'brandId':
+        case 'brand_id':
+          out['brand_id'] = value;
+          break;
+        case 'categoryId':
+        case 'category_id':
+          out['category_id'] = value;
+          break;
+        default:
+          out[key] = value;
+      }
+    });
+    return out;
   }
 }

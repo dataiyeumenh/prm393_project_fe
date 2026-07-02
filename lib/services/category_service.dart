@@ -1,22 +1,60 @@
+import 'package:flutter/foundation.dart';
+
 import '../models/api/category_dto.dart';
 import 'api_service.dart';
 
 class CategoryService {
   static Future<ApiResult<List<CategoryDTO>>> getAllCategories() async {
-    try {
-      final response = await ApiService.dio.get('/api/v1/categories');
+    final endpoints = ['/api/v1/categories', '/api/v1/category'];
 
-      if (response.statusCode == 200) {
-        final data = response.data['data'] as List<dynamic>;
-        final categories = data
-            .map((e) => CategoryDTO.fromJson(e as Map<String, dynamic>))
-            .toList();
-        return ApiResult.success(categories);
+    dynamic lastError;
+    for (final endpoint in endpoints) {
+      try {
+        final response = await ApiService.dio.get(endpoint);
+        debugPrint('[CategoryService] GET $endpoint -> ${response.statusCode}');
+        debugPrint('[CategoryService] Raw body: ${response.data}');
+
+        if (response.statusCode == 200) {
+          final body = response.data;
+          final raw = body is Map<String, dynamic>
+              ? (body['data'] ?? body)
+              : body;
+
+          List<dynamic> list;
+          if (raw is List) {
+            list = raw;
+          } else if (raw is Map && raw['content'] is List) {
+            list = raw['content'] as List<dynamic>;
+          } else if (raw is Map && raw['items'] is List) {
+            list = raw['items'] as List<dynamic>;
+          } else if (raw is Map && raw['results'] is List) {
+            list = raw['results'] as List<dynamic>;
+          } else {
+            list = [];
+          }
+
+          final categories = list
+              .whereType<Map<String, dynamic>>()
+              .map(CategoryDTO.fromJson)
+              .toList();
+          debugPrint(
+            '[CategoryService] Parsed categories count: ${categories.length}',
+          );
+          return ApiResult.success(categories);
+        }
+
+        lastError = response.data;
+      } catch (e) {
+        lastError = e;
+        debugPrint('[CategoryService] Error on $endpoint: $e');
       }
-      return ApiResult.fail(response.data['message'] ?? 'Failed to load categories');
-    } catch (e) {
-      return ApiResult.fail(_extractError(e));
     }
+
+    return ApiResult.fail(
+      lastError != null
+          ? _extractError(lastError)
+          : 'Failed to load categories',
+    );
   }
 
   static String _extractError(dynamic e) {
@@ -39,5 +77,6 @@ class ApiResult<T> {
   ApiResult._({this.data, this.error, required this.isSuccess});
 
   factory ApiResult.success(T data) => ApiResult._(data: data, isSuccess: true);
-  factory ApiResult.fail(String error) => ApiResult._(error: error, isSuccess: false);
+  factory ApiResult.fail(String error) =>
+      ApiResult._(error: error, isSuccess: false);
 }
