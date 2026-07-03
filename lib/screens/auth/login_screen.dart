@@ -6,7 +6,6 @@ import '../../theme/app_theme.dart';
 import '../../widgets/app_background.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/primary_nav_bar.dart';
-import '../../widgets/promo_badge.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {

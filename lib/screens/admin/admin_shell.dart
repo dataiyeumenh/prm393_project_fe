@@ -188,7 +188,7 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ],
               ),
               const Spacer(),
-              if (actions != null) ...actions!,
+              ...?actions,
               if (showLogout)
                 IconButton(
                   icon: const Icon(Icons.logout_rounded, color: AppColors.sale),

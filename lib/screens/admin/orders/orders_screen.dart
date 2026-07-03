@@ -109,7 +109,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                             controller: _scrollCtrl,
                             padding: const EdgeInsets.all(16),
                             itemCount: _orders.length + (_hasMore ? 1 : 0),
-                            separatorBuilder: (_, __) =>
+                            separatorBuilder: (_, _) =>
                                 const SizedBox(height: 10),
                             itemBuilder: (ctx, i) {
                               if (i == _orders.length) {
@@ -172,7 +172,7 @@ class _FilterRow extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: _filters.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
           final f = _filters[i];
           final isSelected = f == selected;

@@ -434,7 +434,7 @@ class _ApiProductCard extends StatelessWidget {
                         child: Image.network(
                           product.primaryImageUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Center(
+                          errorBuilder: (_, _, _) => const Center(
                             child: Icon(Icons.image, color: AppColors.mute),
                           ),
                         ),
@@ -924,7 +924,7 @@ class _ProductSearchDelegate extends SearchDelegate<ProductSummaryDTO?> {
                       p.primaryImageUrl!,
                       width: 50,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, _, _) => Container(
                         width: 50,
                         color: AppColors.softCloud,
                         child: const Icon(Icons.image),

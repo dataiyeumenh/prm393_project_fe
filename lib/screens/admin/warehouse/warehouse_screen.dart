@@ -383,8 +383,8 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
         onPressed: _openProductCreator,
         backgroundColor: AppColors.ink,
         foregroundColor: AppColors.onPrimary,
-        child: const Icon(Icons.add),
         tooltip: 'Add Product',
+        child: const Icon(Icons.add),
       ),
       body: Column(
         children: [
@@ -516,7 +516,7 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
                             itemCount:
                                 filtered.length +
                                 (_hasMore && !_hasActiveFilter ? 1 : 0),
-                            separatorBuilder: (_, __) =>
+                            separatorBuilder: (_, _) =>
                                 const SizedBox(height: 10),
                             itemBuilder: (ctx, i) {
                               if (i == filtered.length) {
@@ -769,7 +769,7 @@ class _ProductStockCardState extends State<_ProductStockCard>
                         ? Image.network(
                             product.primaryImageUrl!,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Icon(
+                            errorBuilder: (_, _, _) => const Icon(
                               Icons.inventory_2_outlined,
                               color: AppColors.mute,
                               size: 22,
@@ -1114,7 +1114,7 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                 ),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<int>(
-                  value: _selectedCategoryId,
+                  initialValue: _selectedCategoryId,
                   isExpanded: true,
                   decoration: const InputDecoration(labelText: 'Category *'),
                   hint: Text(
@@ -1134,7 +1134,7 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                 ),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<int>(
-                  value: _selectedBrandId,
+                  initialValue: _selectedBrandId,
                   isExpanded: true,
                   decoration: const InputDecoration(labelText: 'Brand *'),
                   hint: Text(
@@ -1413,7 +1413,7 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
                 const SizedBox(height: 14),
                 // Category dropdown
                 DropdownButtonFormField<int>(
-                  value: categoryValue,
+                  initialValue: categoryValue,
                   isExpanded: true,
                   decoration: const InputDecoration(labelText: 'Category'),
                   hint: Text(
@@ -1434,7 +1434,7 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
                 const SizedBox(height: 14),
                 // Brand dropdown
                 DropdownButtonFormField<int>(
-                  value: brandValue,
+                  initialValue: brandValue,
                   isExpanded: true,
                   decoration: const InputDecoration(labelText: 'Brand'),
                   hint: Text(

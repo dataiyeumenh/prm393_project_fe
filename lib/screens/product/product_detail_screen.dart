@@ -9,7 +9,6 @@ import '../../state/cart_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/disclosure_row.dart';
 import '../../widgets/primary_button.dart';
-import '../../widgets/promo_badge.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({
