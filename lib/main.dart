@@ -12,18 +12,24 @@ import 'theme/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ApiService.init();
-  runApp(const PawFuelApp());
+  // Restore any cart from a previous run before the first frame, so a
+  // process kill before checkout doesn't silently drop it.
+  final cartState = CartState();
+  await cartState.loadFromLocal();
+  runApp(PawFuelApp(cartState: cartState));
 }
 
 class PawFuelApp extends StatelessWidget {
-  const PawFuelApp({super.key});
+  const PawFuelApp({super.key, required this.cartState});
+
+  final CartState cartState;
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthState()),
-        ChangeNotifierProvider(create: (_) => CartState()),
+        ChangeNotifierProvider.value(value: cartState),
       ],
       child: MaterialApp(
         title: 'PawFuel',
