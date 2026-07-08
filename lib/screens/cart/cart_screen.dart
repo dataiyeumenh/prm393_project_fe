@@ -9,7 +9,11 @@ import '../../utils/formatters.dart';
 import '../checkout/checkout_screen.dart';
 
 class CartScreen extends StatelessWidget {
-  const CartScreen({super.key});
+  const CartScreen({super.key, this.embedded = false});
+
+  /// When true the screen renders without its own AppBar so it can be
+  /// hosted inside a tab (e.g. UserShell) that supplies chrome.
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
@@ -18,26 +22,28 @@ class CartScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      appBar: AppBar(
-        backgroundColor: AppColors.canvas,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.ink),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text('Giỏ hàng', style: AppTypography.headingLg),
-        actions: [
-          if (!cart.isEmpty)
-            TextButton(
-              onPressed: cart.clear,
-              child: Text(
-                'Xóa hết',
-                style: AppTypography.buttonSm.copyWith(color: AppColors.sale),
+      appBar: embedded
+          ? null
+          : AppBar(
+              backgroundColor: AppColors.canvas,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back, color: AppColors.ink),
+                onPressed: () => Navigator.of(context).pop(),
               ),
+              title: Text('Giỏ hàng', style: AppTypography.headingLg),
+              actions: [
+                if (!cart.isEmpty)
+                  TextButton(
+                    onPressed: cart.clear,
+                    child: Text(
+                      'Xóa hết',
+                      style: AppTypography.buttonSm.copyWith(color: AppColors.sale),
+                    ),
+                  ),
+              ],
             ),
-        ],
-      ),
       body: AppBackground(
         child: cart.isEmpty
             ? const _EmptyCart()
@@ -355,7 +361,7 @@ class _EmptyCart extends StatelessWidget {
               ),
               child: InkWell(
                 borderRadius: BorderRadius.circular(AppRadius.full),
-                onTap: () => Navigator.of(context).pop(),
+                onTap: () => Navigator.of(context).maybePop(),
                 child: const Padding(
                   padding:
                       EdgeInsets.symmetric(horizontal: 28, vertical: 14),
