@@ -58,13 +58,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthState>().user;
-    final currFmt = NumberFormat.currency(symbol: '\$', decimalDigits: 0);
+    final currFmt = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: '₫',
+      decimalDigits: 0,
+    );
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
       appBar: AdminAppBar(
-        subtitle: 'Admin Panel',
-        title: 'Dashboard',
+        subtitle: 'Trang quản trị',
+        title: 'Tổng quan',
         showLogout: true,
       ),
       body: RefreshIndicator(
@@ -79,7 +83,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
             // ── Stats grid ────────────────────────────────────────
             Text(
-              'Overview',
+              'Tổng quan',
               style: AppTypography.headingMd.copyWith(
                 color: AppColors.charcoal,
               ),
@@ -96,21 +100,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     childAspectRatio: 1.3,
                     children: [
                       AdminStatCard(
-                        label: 'Total Orders',
+                        label: 'Tổng đơn',
                         value: '${_stats?.totalOrders ?? 0}',
                         icon: Icons.receipt_long_rounded,
                         iconColor: AppColors.info,
                         iconBg: AppColors.info.withValues(alpha: 0.12),
                       ),
                       AdminStatCard(
-                        label: 'Revenue',
+                        label: 'Doanh thu',
                         value: currFmt.format(_stats?.totalRevenue ?? 0),
                         icon: Icons.attach_money_rounded,
                         iconColor: AppColors.success,
                         iconBg: AppColors.success.withValues(alpha: 0.12),
                       ),
                       AdminStatCard(
-                        label: 'Total Users',
+                        label: 'Khách hàng',
                         value: '${_stats?.totalUsers ?? 0}',
                         icon: Icons.group_rounded,
                         iconColor: AppColors.accentPinkDeep,
@@ -119,7 +123,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ),
                       ),
                       AdminStatCard(
-                        label: 'Low Stock',
+                        label: 'Sắp hết hàng',
                         value: '${_stats?.lowStockProducts ?? 0}',
                         icon: Icons.warning_amber_rounded,
                         iconColor: AppColors.saleDeep,
@@ -131,7 +135,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             if (_statsError != null) ...[
               const SizedBox(height: 8),
               _InfoBanner(
-                message: 'Dashboard stats unavailable: $_statsError',
+                message: 'Không tải được số liệu: $_statsError',
                 icon: Icons.info_outline_rounded,
                 color: AppColors.mute,
               ),
@@ -143,7 +147,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             Row(
               children: [
                 Text(
-                  'Recent Orders',
+                  'Đơn hàng gần đây',
                   style: AppTypography.headingMd.copyWith(
                     color: AppColors.charcoal,
                   ),
@@ -151,7 +155,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 const Spacer(),
                 if (!_loadingOrders)
                   Text(
-                    'Live',
+                    'Trực tiếp',
                     style: AppTypography.utilityXs.copyWith(
                       color: AppColors.success,
                       fontWeight: FontWeight.w700,
@@ -165,7 +169,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 : _recentOrders.isEmpty
                 ? const _EmptyState(
                     icon: Icons.receipt_long_outlined,
-                    message: 'No orders yet',
+                    message: 'Chưa có đơn hàng nào',
                   )
                 : Column(
                     children: _recentOrders
@@ -191,9 +195,9 @@ class _GreetingCard extends StatelessWidget {
 
   String get _greeting {
     final h = DateTime.now().hour;
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (h < 12) return 'Chào buổi sáng';
+    if (h < 17) return 'Chào buổi chiều';
+    return 'Chào buổi tối';
   }
 
   @override
@@ -276,7 +280,7 @@ class _RecentOrderTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateFmt = DateFormat('MMM d, HH:mm');
+    final dateFmt = DateFormat('dd/MM, HH:mm');
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),

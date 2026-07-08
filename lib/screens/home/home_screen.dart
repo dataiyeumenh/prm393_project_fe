@@ -14,6 +14,7 @@ import '../../widgets/hero_banner.dart';
 import '../../widgets/primary_nav_bar.dart';
 import '../../widgets/promo_badge.dart';
 import '../../widgets/scroll_to_top_fab.dart';
+import '../../utils/formatters.dart';
 import '../cart/cart_screen.dart';
 import '../product/all_products_screen.dart';
 import '../product/product_detail_screen.dart';
@@ -105,15 +106,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Text(
                         user == null
-                            ? 'Hello, friend!'
-                            : 'Hi, ${user.fullName.split(' ').first}!',
+                            ? 'Xin chào bạn!'
+                            : 'Chào ${user.fullName.split(' ').first}!',
                         style: AppTypography.bodyMd.copyWith(
                           color: AppColors.mute,
                         ),
                       ),
                       const SizedBox(height: 4),
                       const GradientHeadline(
-                        'Fuel\nyour pet.',
+                        'PawFuel.',
                         fontSize: 84,
                         height: 0.88,
                       ),
@@ -129,9 +130,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               SliverToBoxAdapter(
                 child: _SectionHeader(
-                  title: 'Shop by category',
+                  title: 'Mua theo danh mục',
                   emoji: '🐾',
-                  linkLabel: 'See all',
+                  linkLabel: 'Xem tất cả',
                   onLinkTap: () => _push(context, const AllProductsScreen()),
                 ),
               ),
@@ -159,9 +160,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               SliverToBoxAdapter(
                 child: _SectionHeader(
-                  title: 'Trending now',
+                  title: 'Đang hot',
                   emoji: '✨',
-                  linkLabel: 'Shop all',
+                  linkLabel: 'Mua sắm ngay',
                   onLinkTap: () => _push(context, const AllProductsScreen()),
                 ),
               ),
@@ -182,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Padding(
                             padding: const EdgeInsets.all(32),
                             child: Text(
-                              'No products available',
+                              'Chưa có sản phẩm nào',
                               style: AppTypography.bodyMd.copyWith(
                                 color: AppColors.mute,
                               ),
@@ -229,19 +230,23 @@ class _HomeScreenState extends State<HomeScreen> {
                       Row(
                         children: [
                           PromoBadge(label: 'SALE', color: AppColors.saleDeep),
-                          SizedBox(width: 10),
-                          Text(
-                            'Members save more 🐾',
-                            style: TextStyle(
-                              color: AppColors.ink,
-                              fontWeight: FontWeight.w600,
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Thành viên tiết kiệm hơn 🐾',
+                              style: const TextStyle(
+                                color: AppColors.ink,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 14),
                       const GradientHeadline(
-                        'Endless\ndeals.',
+                        'Deal\nkhông ngừng.',
                         fontSize: 56,
                         height: 0.92,
                       ),
@@ -271,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const Text('🐾', style: TextStyle(fontSize: 32)),
                       const SizedBox(height: 6),
                       const GradientHeadline(
-                        'Join the\nPawFuel club.',
+                        'Cùng nhau\nchăm boss.',
                         fontSize: 56,
                         height: 0.92,
                         gradient: LinearGradient(
@@ -286,8 +291,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        'Free shipping on first order. Birthday treats. '
-                        'Early access to drops.',
+                        'Miễn phí vận chuyển đơn đầu tiên. Quà sinh nhật cho boss. '
+                        'Mua sớm vật phẩm mới trước.',
                         style: AppTypography.bodyMd.copyWith(
                           color: AppColors.onPrimary.withValues(alpha: 0.92),
                         ),
@@ -307,7 +312,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 backgroundColor: AppColors.ink,
                                 behavior: SnackBarBehavior.floating,
                                 content: Text(
-                                  'Welcome to the club! Check your inbox.',
+                                  'Chào mừng bạn vào clb! Kiểm tra hộp thư nhé.',
                                   style: AppTypography.captionMd.copyWith(
                                     color: AppColors.onPrimary,
                                   ),
@@ -321,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               vertical: 12,
                             ),
                             child: Text(
-                              'Join Us',
+                              'Tham gia ngay',
                               style: TextStyle(
                                 color: AppColors.ink,
                                 fontWeight: FontWeight.w700,
@@ -340,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Text(
-                    '© 2026 PawFuel · Made with 🐾 for furry friends',
+                    '© 2026 PawFuel · Làm với 🐾 cho các boss',
                     textAlign: TextAlign.center,
                     style: AppTypography.utilityXs.copyWith(
                       color: AppColors.mute,
@@ -493,7 +498,7 @@ class _ApiProductCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          '\$${product.price.toStringAsFixed(0)}',
+                          Formatters.vnd(product.price),
                           style: AppTypography.bodyStrong.copyWith(
                             color: AppColors.ink,
                             fontWeight: FontWeight.w700,
@@ -512,7 +517,7 @@ class _ApiProductCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            product.stockQuantity > 0 ? 'In stock' : 'Out',
+                            product.stockQuantity > 0 ? 'Còn hàng' : 'Hết',
                             style: AppTypography.utilityXs.copyWith(
                               color: product.stockQuantity > 0
                                   ? AppColors.success
@@ -547,25 +552,25 @@ class _TopBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         title: Text(
-          'Log out?',
+          'Đăng xuất?',
           style: AppTypography.headingMd.copyWith(color: AppColors.ink),
         ),
         content: Text(
-          'Are you sure you want to log out?',
+          'Bạn chắc chắn muốn đăng xuất?',
           style: AppTypography.bodyMd.copyWith(color: AppColors.mute),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(
-              'Cancel',
+              'Huỷ',
               style: AppTypography.buttonSm.copyWith(color: AppColors.mute),
             ),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(
-              'Log out',
+              'Đăng xuất',
               style: AppTypography.buttonSm.copyWith(color: AppColors.sale),
             ),
           ),
@@ -622,7 +627,7 @@ class _TopBar extends StatelessWidget {
                     const Icon(Icons.logout, size: 18, color: AppColors.sale),
                     const SizedBox(width: 10),
                     Text(
-                      'Log out',
+                      'Đăng xuất',
                       style: AppTypography.buttonSm.copyWith(
                         color: AppColors.sale,
                       ),

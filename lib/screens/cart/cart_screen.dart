@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../state/cart_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_background.dart';
+import '../../utils/formatters.dart';
 import '../checkout/checkout_screen.dart';
 
 class CartScreen extends StatelessWidget {
@@ -25,13 +26,13 @@ class CartScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: AppColors.ink),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text('Your Cart', style: AppTypography.headingLg),
+        title: Text('Giỏ hàng', style: AppTypography.headingLg),
         actions: [
           if (!cart.isEmpty)
             TextButton(
               onPressed: cart.clear,
               child: Text(
-                'Clear',
+                'Xóa hết',
                 style: AppTypography.buttonSm.copyWith(color: AppColors.sale),
               ),
             ),
@@ -114,7 +115,7 @@ class _CartTile extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      '\$${p.price.toStringAsFixed(2)}',
+                      Formatters.vnd(p.price),
                       style: AppTypography.bodyStrong
                           .copyWith(color: AppColors.accentPinkDeep),
                     ),
@@ -221,16 +222,16 @@ class _CheckoutBar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _SummaryRow(label: 'Subtotal', value: cart.subtotal),
+          _SummaryRow(label: 'Tạm tính', value: cart.subtotal),
           const SizedBox(height: 6),
           _SummaryRow(
-            label: cart.shipping == 0 ? 'Shipping (Free!)' : 'Shipping',
+            label: cart.shipping == 0 ? 'Vận chuyển (Miễn phí!)' : 'Vận chuyển',
             value: cart.shipping,
             highlight: cart.shipping == 0,
           ),
           const Divider(height: 24, color: AppColors.hairlineSoft),
           _SummaryRow(
-            label: 'Total',
+            label: 'Tổng cộng',
             value: cart.total,
             isBold: true,
           ),
@@ -260,7 +261,7 @@ class _CheckoutBar extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Center(
                     child: Text(
-                      'Checkout  •  \$${cart.total.toStringAsFixed(2)}',
+                      'Thanh toán  •  ${Formatters.vnd(cart.total)}',
                       style: AppTypography.buttonLg
                           .copyWith(color: AppColors.onPrimary),
                     ),
@@ -299,7 +300,7 @@ class _SummaryRow extends StatelessWidget {
           ),
         ),
         Text(
-          value == 0 && highlight ? 'Free' : '\$${value.toStringAsFixed(2)}',
+          value == 0 && highlight ? 'Miễn phí' : Formatters.vnd(value),
           style: (isBold ? AppTypography.bodyStrong : AppTypography.bodyMd)
               .copyWith(
             color: highlight
@@ -338,11 +339,11 @@ class _EmptyCart extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Text('Your cart is empty',
+            Text('Giỏ hàng của bạn đang trống',
                 style: AppTypography.headingLg, textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(
-              'Browse our products and add a few treats for your furry friend.',
+              'Khám phá thêm sản phẩm và chọn vài món cho thú cưng của bạn nhé.',
               style: AppTypography.bodyMd.copyWith(color: AppColors.mute),
               textAlign: TextAlign.center,
             ),
@@ -359,7 +360,7 @@ class _EmptyCart extends StatelessWidget {
                   padding:
                       EdgeInsets.symmetric(horizontal: 28, vertical: 14),
                   child: Text(
-                    'Start Shopping',
+                    'Mua sắm ngay',
                     style: TextStyle(
                       color: AppColors.onPrimary,
                       fontWeight: FontWeight.w600,

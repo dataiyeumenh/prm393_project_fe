@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 
 import '../../../models/api/admin_dto.dart';
 import '../../../models/api/brand_dto.dart';
@@ -11,6 +10,7 @@ import '../../../services/admin_service.dart';
 import '../../../services/brand_service.dart';
 import '../../../services/category_service.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/formatters.dart';
 import '../admin_shell.dart';
 
 class AdminWarehouseScreen extends StatefulWidget {
@@ -213,7 +213,7 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
           content: Text(
-            'Product created successfully',
+            'Tạo sản phẩm thành công',
             style: AppTypography.captionMd.copyWith(color: AppColors.onPrimary),
           ),
         ),
@@ -225,7 +225,7 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
           backgroundColor: AppColors.sale,
           behavior: SnackBarBehavior.floating,
           content: Text(
-            createResult.error ?? 'Failed to create product',
+            createResult.error ?? 'Tạo sản phẩm thất bại',
             style: AppTypography.captionMd.copyWith(color: AppColors.onPrimary),
           ),
         ),
@@ -254,7 +254,7 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
           content: Text(
-            'Product updated successfully',
+            'Cập nhật sản phẩm thành công',
             style: AppTypography.captionMd.copyWith(color: AppColors.onPrimary),
           ),
         ),
@@ -267,7 +267,7 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
           backgroundColor: AppColors.sale,
           behavior: SnackBarBehavior.floating,
           content: Text(
-            updateResult.error ?? 'Failed to update product',
+            updateResult.error ?? 'Cập nhật sản phẩm thất bại',
             style: AppTypography.captionMd.copyWith(color: AppColors.onPrimary),
           ),
         ),
@@ -279,19 +279,19 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete product?'),
+        title: const Text('Xoá sản phẩm?'),
         content: Text(
-          'Are you sure you want to delete "${product.name}"? This action cannot be undone.',
+          'Bạn chắc chắn muốn xoá "${product.name}"? Hành động này không thể hoàn tác.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: const Text('Huỷ'),
           ),
           TextButton(
             style: TextButton.styleFrom(foregroundColor: AppColors.sale),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
+            child: const Text('Xoá'),
           ),
         ],
       ),
@@ -307,7 +307,7 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
           content: Text(
-            '${product.name} deleted',
+            '${product.name} đã được xoá',
             style: AppTypography.captionMd.copyWith(color: AppColors.onPrimary),
           ),
         ),
@@ -318,7 +318,7 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
           backgroundColor: AppColors.sale,
           behavior: SnackBarBehavior.floating,
           content: Text(
-            result.error ?? 'Failed to delete product',
+            result.error ?? 'Xoá sản phẩm thất bại',
             style: AppTypography.captionMd.copyWith(color: AppColors.onPrimary),
           ),
         ),
@@ -378,12 +378,12 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
     final filtered = _filteredProducts;
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      appBar: AdminAppBar(subtitle: 'Admin Panel', title: 'Warehouse'),
+      appBar: AdminAppBar(subtitle: 'Trang quản trị', title: 'Kho hàng'),
       floatingActionButton: FloatingActionButton.small(
         onPressed: _openProductCreator,
         backgroundColor: AppColors.ink,
         foregroundColor: AppColors.onPrimary,
-        tooltip: 'Add Product',
+        tooltip: 'Thêm sản phẩm',
         child: const Icon(Icons.add),
       ),
       body: Column(
@@ -400,7 +400,7 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
                     textInputAction: TextInputAction.search,
                     style: AppTypography.bodyMd.copyWith(color: AppColors.ink),
                     decoration: InputDecoration(
-                      hintText: 'Search products…',
+                      hintText: 'Tìm sản phẩm…',
                       prefixIcon: const Icon(
                         Icons.search,
                         color: AppColors.mute,
@@ -434,7 +434,7 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
                             ? AppColors.accentPinkDeep
                             : AppColors.mute,
                       ),
-                      tooltip: 'Filter',
+                      tooltip: 'Bộ lọc',
                     ),
                     if (_hasActiveFilter)
                       Positioned(
@@ -470,14 +470,14 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
                     _FilterChip(
                       label:
                           _brandName(_filterBrandId!) ??
-                          'Brand $_filterBrandId',
+                          'Thương hiệu ${_brandName(_filterBrandId!) ?? ''}',
                       onRemove: () => setState(() => _filterBrandId = null),
                     ),
                   if (_filterCategoryId != null)
                     _FilterChip(
                       label:
                           _categoryName(_filterCategoryId!) ??
-                          'Category $_filterCategoryId',
+                          'Danh mục ${_categoryName(_filterCategoryId!) ?? ''}',
                       onRemove: () => setState(() => _filterCategoryId = null),
                     ),
                   const SizedBox(width: 4),
@@ -488,7 +488,7 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
                       _filterLevel = null;
                     }),
                     child: Text(
-                      'Clear all',
+                      'Xoá hết bộ lọc',
                       style: AppTypography.utilityXs.copyWith(
                         color: AppColors.sale,
                         fontWeight: FontWeight.w600,
@@ -630,7 +630,6 @@ class _ProductStockCardState extends State<_ProductStockCard>
 
   @override
   Widget build(BuildContext context) {
-    final currFmt = NumberFormat.currency(symbol: '\$', decimalDigits: 2);
     final level = widget.product.stockLevel;
     final product = widget.product;
 
@@ -676,7 +675,7 @@ class _ProductStockCardState extends State<_ProductStockCard>
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Update',
+                                'Sửa',
                                 style: AppTypography.utilityXs.copyWith(
                                   color: AppColors.accentPinkDeep,
                                   fontWeight: FontWeight.w600,
@@ -712,7 +711,7 @@ class _ProductStockCardState extends State<_ProductStockCard>
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Delete',
+                                'Xoá',
                                 style: AppTypography.utilityXs.copyWith(
                                   color: AppColors.sale,
                                   fontWeight: FontWeight.w600,
@@ -817,7 +816,7 @@ class _ProductStockCardState extends State<_ProductStockCard>
                               const SizedBox(width: 6),
                             ],
                             Text(
-                              currFmt.format(product.price),
+                              Formatters.vnd(product.price),
                               style: AppTypography.utilityXs.copyWith(
                                 color: AppColors.mute,
                               ),
@@ -839,7 +838,7 @@ class _ProductStockCardState extends State<_ProductStockCard>
                                 ),
                               ),
                               child: Text(
-                                '${product.stockQuantity} in stock',
+                                '${product.stockQuantity} trong kho',
                                 style: AppTypography.utilityXs.copyWith(
                                   color: widget.stockColor,
                                   fontWeight: FontWeight.w700,
@@ -859,7 +858,7 @@ class _ProductStockCardState extends State<_ProductStockCard>
                                 ),
                               ),
                               child: Text(
-                                level.label,
+                                level.viLabel,
                                 style: AppTypography.utilityXs.copyWith(
                                   color: widget.stockColor,
                                   fontWeight: FontWeight.w600,
@@ -967,23 +966,23 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
     final stock = int.tryParse(_stockCtrl.text.trim());
 
     if (name.isEmpty) {
-      setState(() => _error = 'Product name is required');
+      setState(() => _error = 'Vui lòng nhập tên sản phẩm');
       return;
     }
     if (price == null || price < 0) {
-      setState(() => _error = 'Valid price is required');
+      setState(() => _error = 'Vui lòng nhập giá hợp lệ');
       return;
     }
     if (stock == null || stock < 0) {
-      setState(() => _error = 'Valid stock quantity is required');
+      setState(() => _error = 'Vui lòng nhập số lượng tồn kho hợp lệ');
       return;
     }
     if (_selectedCategoryId == null) {
-      setState(() => _error = 'Please select a category');
+      setState(() => _error = 'Vui lòng chọn danh mục');
       return;
     }
     if (_selectedBrandId == null) {
-      setState(() => _error = 'Please select a brand');
+      setState(() => _error = 'Vui lòng chọn thương hiệu');
       return;
     }
 
@@ -1042,12 +1041,12 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Add Product',
+                  'Thêm sản phẩm',
                   style: AppTypography.headingMd.copyWith(color: AppColors.ink),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Create product and upload optional thumbnail image.',
+                  'Tạo sản phẩm mới và có thể tải ảnh đại diện lên.',
                   style: AppTypography.bodyMd.copyWith(color: AppColors.mute),
                 ),
                 const SizedBox(height: 20),
@@ -1055,7 +1054,7 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                   controller: _nameCtrl,
                   textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(
-                    labelText: 'Product name *',
+                    labelText: 'Tên sản phẩm *',
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -1064,7 +1063,7 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                   maxLines: 3,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: const InputDecoration(
-                    labelText: 'Description',
+                    labelText: 'Mô tả',
                     alignLabelWithHint: true,
                   ),
                 ),
@@ -1073,7 +1072,7 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                   controller: _skuCtrl,
                   textCapitalization: TextCapitalization.characters,
                   decoration: const InputDecoration(
-                    labelText: 'SKU (optional)',
+                    labelText: 'Mã SKU (không bắt buộc)',
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -1091,8 +1090,8 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                           ),
                         ],
                         decoration: const InputDecoration(
-                          labelText: 'Price *',
-                          prefixText: '\$ ',
+                          labelText: 'Giá *',
+                          prefixText: '₫ ',
                         ),
                       ),
                     ),
@@ -1105,8 +1104,8 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                           FilteringTextInputFormatter.digitsOnly,
                         ],
                         decoration: const InputDecoration(
-                          labelText: 'Stock qty *',
-                          suffixText: 'units',
+                          labelText: 'Tồn kho *',
+                          suffixText: 'sp',
                         ),
                       ),
                     ),
@@ -1116,11 +1115,11 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                 DropdownButtonFormField<int>(
                   initialValue: _selectedCategoryId,
                   isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Category *'),
+                  decoration: const InputDecoration(labelText: 'Danh mục *'),
                   hint: Text(
                     hasCategories
-                        ? 'Select category'
-                        : 'No categories available',
+                        ? 'Chọn danh mục'
+                        : 'Chưa có danh mục nào',
                   ),
                   items: widget.categories
                       .map(
@@ -1136,9 +1135,9 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                 DropdownButtonFormField<int>(
                   initialValue: _selectedBrandId,
                   isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Brand *'),
+                  decoration: const InputDecoration(labelText: 'Thương hiệu *'),
                   hint: Text(
-                    hasBrands ? 'Select brand' : 'No brands available',
+                    hasBrands ? 'Chọn thương hiệu' : 'Chưa có thương hiệu nào',
                   ),
                   items: widget.brands
                       .map(
@@ -1156,8 +1155,8 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                   icon: const Icon(Icons.image_outlined),
                   label: Text(
                     _pickingImage
-                        ? 'Picking image...'
-                        : 'Choose thumbnail image',
+                        ? 'Đang chọn ảnh...'
+                        : 'Chọn ảnh đại diện',
                   ),
                 ),
                 if (_imageFileName != null) ...[
@@ -1196,7 +1195,7 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Cancel'),
+                        child: const Text('Huỷ'),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -1210,7 +1209,7 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                           ),
                         ),
                         onPressed: _save,
-                        child: const Text('Create'),
+                        child: const Text('Tạo mới'),
                       ),
                     ),
                   ],
@@ -1345,7 +1344,7 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Update Product',
+                  'Cập nhật sản phẩm',
                   style: AppTypography.headingMd.copyWith(color: AppColors.ink),
                 ),
                 const SizedBox(height: 4),
@@ -1359,7 +1358,7 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
                   controller: _nameCtrl,
                   textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(
-                    labelText: 'Product name *',
+                    labelText: 'Tên sản phẩm *',
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -1369,7 +1368,7 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
                   maxLines: 3,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: const InputDecoration(
-                    labelText: 'Description',
+                    labelText: 'Mô tả',
                     alignLabelWithHint: true,
                   ),
                 ),
@@ -1389,8 +1388,8 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
                           ),
                         ],
                         decoration: const InputDecoration(
-                          labelText: 'Price *',
-                          prefixText: '\$ ',
+                          labelText: 'Giá *',
+                          prefixText: '₫ ',
                         ),
                       ),
                     ),
@@ -1403,8 +1402,8 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
                           FilteringTextInputFormatter.digitsOnly,
                         ],
                         decoration: const InputDecoration(
-                          labelText: 'Stock qty *',
-                          suffixText: 'units',
+                          labelText: 'Tồn kho *',
+                          suffixText: 'sp',
                         ),
                       ),
                     ),
@@ -1415,11 +1414,11 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
                 DropdownButtonFormField<int>(
                   initialValue: categoryValue,
                   isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Category'),
+                  decoration: const InputDecoration(labelText: 'Danh mục'),
                   hint: Text(
                     widget.categories.isNotEmpty
-                        ? 'Select category'
-                        : 'No categories available',
+                        ? 'Chọn danh mục'
+                        : 'Chưa có danh mục nào',
                   ),
                   items: widget.categories
                       .map(
@@ -1436,11 +1435,11 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
                 DropdownButtonFormField<int>(
                   initialValue: brandValue,
                   isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Brand'),
+                  decoration: const InputDecoration(labelText: 'Thương hiệu'),
                   hint: Text(
                     widget.brands.isNotEmpty
-                        ? 'Select brand'
-                        : 'No brands available',
+                        ? 'Chọn thương hiệu'
+                        : 'Chưa có thương hiệu nào',
                   ),
                   items: widget.brands
                       .map(
@@ -1458,7 +1457,7 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Cancel'),
+                        child: const Text('Huỷ'),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -1472,7 +1471,7 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
                           ),
                         ),
                         onPressed: _save,
-                        child: const Text('Save'),
+                        child: const Text('Lưu'),
                       ),
                     ),
                   ],
@@ -1503,7 +1502,7 @@ class _EmptyWarehouse extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'No products found',
+              'Chưa tìm thấy sản phẩm',
               style: AppTypography.headingMd.copyWith(color: AppColors.ash),
             ),
           ],
@@ -1534,7 +1533,7 @@ class _WarehouseError extends StatelessWidget {
               style: AppTypography.bodyMd.copyWith(color: AppColors.mute),
             ),
             const SizedBox(height: 16),
-            OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
+            OutlinedButton(onPressed: onRetry, child: const Text('Thử lại')),
           ],
         ),
       ),
@@ -1665,14 +1664,14 @@ class _FilterSheetState extends State<_FilterSheet> {
               ),
               const SizedBox(height: 20),
               Text(
-                'Filter Products',
+                'Lọc sản phẩm',
                 style: AppTypography.headingMd.copyWith(color: AppColors.ink),
               ),
               const SizedBox(height: 20),
 
               // ── Stock Level ──
               Text(
-                'Stock Level',
+                'Mức tồn kho',
                 style: AppTypography.captionMd.copyWith(
                   color: AppColors.ink,
                   fontWeight: FontWeight.w700,
@@ -1691,7 +1690,7 @@ class _FilterSheetState extends State<_FilterSheet> {
               // ── Category ──
               if (widget.categories.isNotEmpty) ...[
                 Text(
-                  'Category',
+                  'Danh mục',
                   style: AppTypography.captionMd.copyWith(
                     color: AppColors.ink,
                     fontWeight: FontWeight.w700,
@@ -1717,7 +1716,7 @@ class _FilterSheetState extends State<_FilterSheet> {
               // ── Brand ──
               if (widget.brands.isNotEmpty) ...[
                 Text(
-                  'Brand',
+                  'Thương hiệu',
                   style: AppTypography.captionMd.copyWith(
                     color: AppColors.ink,
                     fontWeight: FontWeight.w700,
@@ -1752,7 +1751,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                           color: AppColors.sale.withValues(alpha: 0.5),
                         ),
                       ),
-                      child: const Text('Clear'),
+                      child: const Text('Đặt lại'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1767,7 +1766,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                       ),
                       onPressed: () =>
                           widget.onApply(_brandId, _categoryId, _level),
-                      child: const Text('Apply'),
+                      child: const Text('Áp dụng'),
                     ),
                   ),
                 ],
@@ -1796,7 +1795,7 @@ class _FilterSheetState extends State<_FilterSheet> {
           ),
         ),
         child: Text(
-          level.label,
+          level.viLabel,
           style: AppTypography.utilityXs.copyWith(
             color: selected ? color : AppColors.ash,
             fontWeight: selected ? FontWeight.w700 : FontWeight.w500,

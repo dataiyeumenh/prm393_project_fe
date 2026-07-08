@@ -8,6 +8,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/filter_chip_pill.dart';
 import '../../widgets/app_background.dart';
 import '../../widgets/scroll_to_top_fab.dart';
+import '../../utils/formatters.dart';
 import '../cart/cart_screen.dart';
 import 'product_detail_screen.dart';
 
@@ -27,11 +28,11 @@ extension on _SortOption {
   String get label {
     switch (this) {
       case _SortOption.featured:
-        return 'Featured';
+        return 'Nổi bật';
       case _SortOption.priceLow:
-        return 'Price ↑';
+        return 'Giá tăng dần';
       case _SortOption.priceHigh:
-        return 'Price ↓';
+        return 'Giá giảm dần';
     }
   }
 
@@ -79,7 +80,7 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
     super.initState();
     _selectedCategoryId = widget.initialCategoryId;
     _scrollCtrl.addListener(_onScroll);
-    _loadProducts();
+    _loadProducts(reset: true);
   }
 
   void _onScroll() {
@@ -125,7 +126,12 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
         _loadingMore = false;
       });
     } else {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _loadingMore = false;
+        });
+      }
     }
   }
 
@@ -204,7 +210,7 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
-              widget.categoryName ?? 'All Products',
+              widget.categoryName ?? 'Tất cả sản phẩm',
               style: AppTypography.headingLg,
             ),
             actions: [
@@ -236,7 +242,7 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
                     Expanded(
                       child: _PillButton(
                         icon: Icons.tune,
-                        label: 'Filters',
+                        label: 'Bộ lọc',
                         active: _selectedCategoryId != null,
                         onTap: _openFilters,
                       ),
@@ -267,7 +273,7 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
                         child: Row(
                           children: [
                             Text(
-                              '$_totalElements results',
+                              '$_totalElements sản phẩm',
                               style: AppTypography.captionMd
                                   .copyWith(color: AppColors.mute),
                             ),
@@ -474,7 +480,7 @@ class _ApiProductCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          '\$${product.price.toStringAsFixed(0)}',
+                          Formatters.vnd(product.price),
                           style: AppTypography.bodyStrong.copyWith(
                             color: AppColors.ink,
                             fontWeight: FontWeight.w700,
@@ -493,7 +499,7 @@ class _ApiProductCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            product.stockQuantity > 0 ? 'In stock' : 'Out',
+                            product.stockQuantity > 0 ? 'Còn hàng' : 'Hết',
                             style: AppTypography.utilityXs.copyWith(
                               color: product.stockQuantity > 0
                                   ? AppColors.success
@@ -602,7 +608,7 @@ class _PaginationFooter extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  'Showing $shown of $total',
+                  'Đang hiển thị $shown / $total',
                   style: AppTypography.captionMd.copyWith(color: AppColors.mute),
                 ),
                 const Spacer(),
@@ -640,7 +646,7 @@ class _PaginationFooter extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     child: Center(
                       child: Text(
-                        hasMore ? 'Load more ↓' : 'You reached the end 🎉',
+                        hasMore ? 'Tải thêm ↓' : 'Bạn đã xem hết 🎉',
                         style: AppTypography.buttonSm.copyWith(
                           color: hasMore
                               ? AppColors.onPrimary
@@ -787,7 +793,7 @@ class _FilterSheetState extends State<_FilterSheet> {
             const SizedBox(height: 16),
             Row(
               children: [
-                Text('Filters', style: AppTypography.headingLg),
+                Text('Bộ lọc', style: AppTypography.headingLg),
                 const Spacer(),
                 TextButton(
                   onPressed: () {
@@ -795,7 +801,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                     widget.onReset();
                   },
                   child: Text(
-                    'Reset',
+                    'Đặt lại',
                     style: AppTypography.buttonSm
                         .copyWith(color: AppColors.sale),
                   ),
@@ -803,18 +809,18 @@ class _FilterSheetState extends State<_FilterSheet> {
               ],
             ),
             const SizedBox(height: 12),
-            Text('Category', style: AppTypography.captionMd),
+            Text('Danh mục', style: AppTypography.captionMd),
             const SizedBox(height: 8),
             Expanded(
               child: ListView(
                 children: [
                   FilterChipPill(
-                    label: 'All',
+                    label: 'Tất cả',
                     active: _tempCategoryId == null,
                     onTap: () => setState(() => _tempCategoryId = null),
                   ),
                   const SizedBox(height: 8),
-                  ...['Dry Food', 'Wet Food', 'Treats', 'Cat Litter', 'Bird Seed', 'Fish Food', 'Toys', 'Accessories']
+                  ...['Thức ăn khô', 'Thức ăn ướt', 'Đồ ăn vặt', 'Cát mèo', 'Thức ăn chim', 'Thức ăn cá', 'Đồ chơi', 'Phụ kiện']
                       .asMap()
                       .entries
                       .map((e) => Padding(
@@ -843,7 +849,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                   padding: EdgeInsets.symmetric(vertical: 16),
                   child: Center(
                     child: Text(
-                      'Apply',
+                      'Áp dụng',
                       style: TextStyle(
                         color: AppColors.onPrimary,
                         fontWeight: FontWeight.w700,
@@ -899,7 +905,7 @@ class _ProductSearchDelegate extends SearchDelegate<ProductSummaryDTO?> {
 
   Widget _buildSearchResults(BuildContext context) {
     if (query.isEmpty) {
-      return const Center(child: Text('Type to search…'));
+      return const Center(child: Text('Nhập để tìm kiếm…'));
     }
 
     return FutureBuilder<List<ProductSummaryDTO>>(
@@ -910,7 +916,7 @@ class _ProductSearchDelegate extends SearchDelegate<ProductSummaryDTO?> {
         }
 
         if (_results.isEmpty) {
-          return const Center(child: Text('No matches found'));
+          return const Center(child: Text('Không có kết quả phù hợp'));
         }
 
         return ListView.separated(
@@ -937,7 +943,7 @@ class _ProductSearchDelegate extends SearchDelegate<ProductSummaryDTO?> {
                     ),
               title: Text(p.name),
               subtitle: Text(p.brandName ?? ''),
-              trailing: Text('\$${p.price.toStringAsFixed(0)}'),
+              trailing: Text(Formatters.vnd(p.price)),
               onTap: () {
                 onProductSelected(p);
                 close(context, p);
@@ -993,13 +999,13 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'No products found',
+              'Không tìm thấy sản phẩm',
               style: AppTypography.headingLg,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Try a different filter or category.',
+              'Thử bỏ bộ lọc hoặc chọn danh mục khác nhé.',
               style: AppTypography.bodyMd.copyWith(color: AppColors.mute),
               textAlign: TextAlign.center,
             ),
@@ -1016,7 +1022,7 @@ class _EmptyState extends StatelessWidget {
                   padding: EdgeInsets.symmetric(
                       horizontal: 22, vertical: 12),
                   child: Text(
-                    'Reset Filters',
+                    'Đặt lại bộ lọc',
                     style: TextStyle(
                       color: AppColors.onPrimary,
                       fontWeight: FontWeight.w700,

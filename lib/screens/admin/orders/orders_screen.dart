@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../models/api/order_dto.dart';
 import '../../../services/order_service.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/formatters.dart';
 import '../admin_shell.dart';
 import 'order_detail_screen.dart';
 
@@ -88,7 +89,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      appBar: AdminAppBar(subtitle: 'Admin Panel', title: 'Orders'),
+      appBar: AdminAppBar(subtitle: 'Trang quản trị', title: 'Đơn hàng'),
       body: Column(
         children: [
           // Filter chips
@@ -162,7 +163,7 @@ class _FilterRow extends StatelessWidget {
     OrderStatus.cancelled,
   ];
 
-  String _label(OrderStatus? s) => s == null ? 'All' : s.label;
+  String _label(OrderStatus? s) => s == null ? 'Tất cả' : s.viLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -217,8 +218,7 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateFmt = DateFormat('MMM d, yyyy · HH:mm');
-    final currFmt = NumberFormat.currency(symbol: '\$', decimalDigits: 2);
+    final dateFmt = DateFormat('dd/MM/yyyy · HH:mm');
 
     return GestureDetector(
       onTap: onTap,
@@ -250,7 +250,7 @@ class _OrderCard extends StatelessWidget {
                   ),
                 ),
                 StatusChip(
-                  label: order.status.label,
+                  label: order.status.viLabel,
                   color: order.status.color,
                   bgColor: order.status.bgColor,
                 ),
@@ -293,14 +293,14 @@ class _OrderCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  '${order.itemCount} item${order.itemCount == 1 ? '' : 's'}',
+                  '${order.itemCount} sản phẩm',
                   style: AppTypography.utilityXs.copyWith(
                     color: AppColors.mute,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  currFmt.format(order.totalAmount),
+                  Formatters.vnd(order.totalAmount),
                   style: AppTypography.captionMd.copyWith(
                     color: AppColors.accentPinkDeep,
                     fontWeight: FontWeight.w700,
@@ -332,12 +332,12 @@ class _EmptyOrders extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'No orders found',
+              'Chưa có đơn hàng nào',
               style: AppTypography.headingMd.copyWith(color: AppColors.ash),
             ),
             const SizedBox(height: 8),
             Text(
-              'Orders will appear here once placed.',
+              'Các đơn hàng sẽ hiện ra ở đây khi có người đặt.',
               style: AppTypography.bodyMd.copyWith(color: AppColors.stone),
             ),
           ],
@@ -368,7 +368,7 @@ class _ErrorState extends StatelessWidget {
               style: AppTypography.bodyMd.copyWith(color: AppColors.mute),
             ),
             const SizedBox(height: 16),
-            OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
+            OutlinedButton(onPressed: onRetry, child: const Text('Thử lại')),
           ],
         ),
       ),
