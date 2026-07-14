@@ -1133,6 +1133,21 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                         ? 'Select category'
                         : 'No categories available',
                   ),
+                  items: widget.categories
+                      .map(
+                        (c) => DropdownMenuItem<int>(
+                          value: c.id,
+                          child: Text(c.name),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedCategoryId = value;
+                      _categoryIdCtrl.text = value?.toString() ?? '';
+                    });
+                  },
+                ),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<int>(
                   initialValue: _selectedBrandId,
@@ -1141,6 +1156,21 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                   hint: Text(
                     hasBrands ? 'Select brand' : 'No brands available',
                   ),
+                  items: widget.brands
+                      .map(
+                        (b) => DropdownMenuItem<int>(
+                          value: b.id,
+                          child: Text(b.name),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedBrandId = value;
+                      _brandIdCtrl.text = value?.toString() ?? '';
+                    });
+                  },
+                ),
                 const SizedBox(height: 14),
                 OutlinedButton.icon(
                   onPressed: _pickingImage ? null : _pickImage,
@@ -1423,6 +1453,21 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
                         ? 'Select category'
                         : 'No categories available',
                   ),
+                  items: widget.categories
+                      .map(
+                        (c) => DropdownMenuItem<int>(
+                          value: c.id,
+                          child: Text(c.name),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedCategoryId = value;
+                      _categoryIdCtrl.text = value?.toString() ?? '';
+                    });
+                  },
+                ),
                 const SizedBox(height: 14),
                 // Brand dropdown
                 DropdownButtonFormField<int>(
@@ -1434,6 +1479,21 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
                         ? 'Select brand'
                         : 'No brands available',
                   ),
+                  items: widget.brands
+                      .map(
+                        (b) => DropdownMenuItem<int>(
+                          value: b.id,
+                          child: Text(b.name),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedBrandId = value;
+                      _brandIdCtrl.text = value?.toString() ?? '';
+                    });
+                  },
+                ),
                 const SizedBox(height: 24),
                 Row(
                   children: [
