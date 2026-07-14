@@ -12,8 +12,13 @@ class BrandDTO {
   });
 
   factory BrandDTO.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
     return BrandDTO(
-      id: json['id'] as int? ?? 0,
+      id: rawId is int
+          ? rawId
+          : rawId is num
+          ? rawId.toInt()
+          : int.tryParse(rawId?.toString() ?? '') ?? 0,
       name: json['name'] as String? ?? 'Unknown',
       description: json['description'] as String?,
       logoUrl: json['logoUrl'] as String? ?? json['imageUrl'] as String?,
