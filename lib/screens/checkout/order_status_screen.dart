@@ -6,6 +6,7 @@ import '../../services/order_service.dart';
 import '../../services/payment_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_background.dart';
+import '../../utils/formatters.dart';
 import 'checkout_screen.dart' show PaymentMethod;
 import 'payment_webview_screen.dart';
 
@@ -64,7 +65,7 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
     if (!mounted) return;
     setState(() => _payingAgain = false);
     if (!result.isSuccess) {
-      _snack(result.error ?? 'Could not start VNPay payment.');
+      _snack(result.error ?? 'Không tạo được liên kết VNPay.');
       return;
     }
     await Navigator.of(context).push<String>(
@@ -101,7 +102,7 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
-        title: Text('Order', style: AppTypography.headingLg),
+        title: Text('Đơn hàng', style: AppTypography.headingLg),
         actions: [
           IconButton(
             onPressed: _loading ? null : _load,
@@ -141,7 +142,7 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
                   children: [
                     Row(
                       children: [
-                        Text('Order', style: AppTypography.captionSm.copyWith(color: AppColors.mute)),
+                        Text('Đơn hàng', style: AppTypography.captionSm.copyWith(color: AppColors.mute)),
                         const Spacer(),
                         Text('#${_short(order.id)}',
                             style: AppTypography.bodyStrong),
@@ -150,7 +151,7 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Text('Status', style: AppTypography.captionSm.copyWith(color: AppColors.mute)),
+                        Text('Trạng thái', style: AppTypography.captionSm.copyWith(color: AppColors.mute)),
                         const Spacer(),
                         _StatusChip(status: order.status),
                       ],
@@ -158,10 +159,10 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Text('Placed', style: AppTypography.captionSm.copyWith(color: AppColors.mute)),
+                        Text('Đặt lúc', style: AppTypography.captionSm.copyWith(color: AppColors.mute)),
                         const Spacer(),
                         Text(
-                          DateFormat('dd MMM yyyy · HH:mm')
+                          DateFormat('dd/MM/yyyy · HH:mm')
                               .format(order.createdAt.toLocal()),
                           style: AppTypography.bodyMd,
                         ),
@@ -194,7 +195,7 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
                             if (order.notes != null &&
                                 order.notes!.isNotEmpty) ...[
                               const SizedBox(height: 6),
-                              Text('Note: ${order.notes}',
+                              Text('Ghi chú: ${order.notes}',
                                   style: AppTypography.captionSm
                                       .copyWith(color: AppColors.mute)),
                             ],
@@ -219,9 +220,9 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
                     const Divider(height: 22, color: AppColors.hairlineSoft),
                     Row(
                       children: [
-                        Text('Total', style: AppTypography.bodyStrong),
+                        Text('Tổng cộng', style: AppTypography.bodyStrong),
                         const Spacer(),
-                        Text('\$${order.totalAmount.toStringAsFixed(2)}',
+                        Text(Formatters.vnd(order.totalAmount),
                             style: AppTypography.bodyStrong
                                 .copyWith(color: AppColors.accentPinkDeep)),
                       ],
@@ -233,7 +234,7 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
                 const SizedBox(height: 16),
                 _InfoBanner(
                   text:
-                      'Waiting for your VNPay payment. After paying, tap "I\'ve paid" to refresh the status.',
+                      'Đang chờ bạn thanh toán VNPay. Sau khi thanh toán xong, bấm "Đã thanh toán" để cập nhật trạng thái nhé.',
                 ),
               ],
             ],
@@ -277,23 +278,23 @@ class _Header extends StatelessWidget {
     if (cancelled) {
       icon = Icons.cancel_outlined;
       color = AppColors.sale;
-      title = 'Order cancelled';
-      subtitle = 'This order was cancelled or the payment failed.';
+      title = 'Đơn hàng đã huỷ';
+      subtitle = 'Đơn hàng đã huỷ hoặc thanh toán không thành công.';
     } else if (paid) {
       icon = Icons.verified_outlined;
       color = AppColors.success;
-      title = 'Payment confirmed';
-      subtitle = 'Thanks! We\'re preparing your order.';
+      title = 'Thanh toán thành công';
+      subtitle = 'Cảm ơn bạn! Chúng tôi đang chuẩn bị đơn cho bạn.';
     } else if (method == PaymentMethod.vnpay) {
       icon = Icons.schedule;
       color = AppColors.info;
-      title = 'Awaiting payment';
-      subtitle = 'Complete the VNPay payment to confirm your order.';
+      title = 'Đang chờ thanh toán';
+      subtitle = 'Hoàn tất thanh toán VNPay để xác nhận đơn hàng nhé.';
     } else {
       icon = Icons.celebration_outlined;
       color = AppColors.accentPinkDeep;
-      title = 'Order placed!';
-      subtitle = 'Pay with cash when your order is delivered.';
+      title = 'Đặt hàng thành công!';
+      subtitle = 'Bạn sẽ trả tiền mặt cho shipper khi nhận hàng.';
     }
 
     return Column(
@@ -326,7 +327,14 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = status.color;
-    final label = status.apiValue;
+    final label = switch (status) {
+      OrderStatus.pending => 'Chờ thanh toán',
+      OrderStatus.confirmed => 'Đã xác nhận',
+      OrderStatus.processing => 'Đang xử lý',
+      OrderStatus.shipped => 'Đang giao',
+      OrderStatus.delivered => 'Đã giao',
+      OrderStatus.cancelled => 'Đã huỷ',
+    };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -356,13 +364,13 @@ class _ItemRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis),
               const SizedBox(height: 2),
-              Text('Qty ${item.quantity} · \$${item.unitPrice.toStringAsFixed(2)}',
+              Text('SL ${item.quantity} · ${Formatters.vnd(item.unitPrice)}',
                   style:
                       AppTypography.captionSm.copyWith(color: AppColors.mute)),
             ],
           ),
         ),
-        Text('\$${item.subTotal.toStringAsFixed(2)}',
+        Text(Formatters.vnd(item.subTotal),
             style: AppTypography.bodyStrong),
       ],
     );
@@ -430,14 +438,14 @@ class _BottomActions extends StatelessWidget {
         children: [
           if (awaitingPayment) ...[
             _FilledButton(
-              label: 'Pay again with VNPay',
+              label: 'Thanh toán lại bằng VNPay',
               icon: Icons.open_in_new,
               busy: payingAgain,
               onTap: onPayAgain,
             ),
             const SizedBox(height: 10),
             _FilledButton(
-              label: 'I\'ve paid — refresh status',
+              label: 'Đã thanh toán — cập nhật',
               icon: Icons.refresh,
               filled: false,
               onTap: onRefresh,
@@ -445,7 +453,7 @@ class _BottomActions extends StatelessWidget {
             const SizedBox(height: 10),
           ],
           _FilledButton(
-            label: 'Back to home',
+            label: 'Về trang chủ',
             filled: !awaitingPayment,
             onTap: onDone,
           ),
@@ -553,7 +561,7 @@ class _ErrorView extends StatelessWidget {
                 style: AppTypography.bodyMd.copyWith(color: AppColors.ash),
                 textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            TextButton(onPressed: onRetry, child: const Text('Retry')),
+            TextButton(onPressed: onRetry, child: const Text('Thử lại')),
           ],
         ),
       ),

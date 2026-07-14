@@ -11,6 +11,7 @@ import '../../services/payment_service.dart';
 import '../../state/cart_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_background.dart';
+import '../../utils/formatters.dart';
 import 'address_form_sheet.dart';
 import 'order_status_screen.dart';
 import 'payment_webview_screen.dart';
@@ -106,7 +107,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final cart = context.read<CartState>();
     if (cart.isEmpty) return;
     if (_selectedAddress == null) {
-      _snack('Please choose a delivery address first.');
+      _snack('Vui lòng chọn địa chỉ giao hàng trước nhé.');
       return;
     }
 
@@ -120,7 +121,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (!mounted) return;
     if (!sync.isSuccess) {
       setState(() => _placingOrder = false);
-      _snack(sync.error ?? 'Could not sync your cart.');
+      _snack(sync.error ?? 'Không đồng bộ được giỏ hàng.');
       return;
     }
 
@@ -134,7 +135,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (!mounted) return;
     if (!checkout.isSuccess) {
       setState(() => _placingOrder = false);
-      _snack(checkout.error ?? 'Checkout failed.');
+      _snack(checkout.error ?? 'Đặt hàng thất bại.');
       return;
     }
     final order = checkout.data!;
@@ -147,7 +148,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (!mounted) return;
       if (!pay.isSuccess) {
         setState(() => _placingOrder = false);
-        _snack(pay.error ?? 'Could not start VNPay payment.');
+        _snack(pay.error ?? 'Không tạo được liên kết VNPay.');
         return;
       }
       paymentUrl = pay.data!.paymentUrl;
@@ -199,13 +200,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           icon: const Icon(Icons.arrow_back, color: AppColors.ink),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text('Checkout', style: AppTypography.headingLg),
+        title: Text('Thanh toán', style: AppTypography.headingLg),
       ),
       body: AppBackground(
         child: cart.isEmpty
             ? Center(
                 child: Text(
-                  'Your cart is empty.',
+                  'Giỏ hàng của bạn đang trống.',
                   style: AppTypography.bodyMd.copyWith(color: AppColors.mute),
                 ),
               )
@@ -215,7 +216,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                       children: [
-                        _SectionLabel('Delivery address'),
+                        _SectionLabel('Địa chỉ giao hàng'),
                         const SizedBox(height: 8),
                         _AddressSection(
                           loading: _loadingAddresses,
@@ -227,21 +228,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           onRetry: _loadAddresses,
                         ),
                         const SizedBox(height: 24),
-                        _SectionLabel('Order summary'),
+                        _SectionLabel('Tóm tắt đơn hàng'),
                         const SizedBox(height: 8),
                         _OrderSummaryCard(lines: cart.lines),
                         const SizedBox(height: 24),
-                        _SectionLabel('Note for the courier (optional)'),
+                        _SectionLabel('Ghi chú cho tài xế (không bắt buộc)'),
                         const SizedBox(height: 8),
                         _NoteField(controller: _noteController),
                         const SizedBox(height: 24),
-                        _SectionLabel('Payment method'),
+                        _SectionLabel('Phương thức thanh toán'),
                         const SizedBox(height: 8),
                         _PaymentMethodTile(
                           selected: _method == PaymentMethod.vnpay,
                           icon: Icons.account_balance_wallet_outlined,
                           title: 'VNPay',
-                          subtitle: 'Pay online via the VNPay gateway',
+                          subtitle: 'Thanh toán online qua cổng VNPay',
                           onTap: () =>
                               setState(() => _method = PaymentMethod.vnpay),
                         ),
@@ -249,8 +250,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         _PaymentMethodTile(
                           selected: _method == PaymentMethod.cod,
                           icon: Icons.payments_outlined,
-                          title: 'Cash on delivery',
-                          subtitle: 'Pay with cash when your order arrives',
+                          title: 'Thanh toán khi nhận hàng',
+                          subtitle: 'Trả tiền mặt cho shipper khi nhận đồ',
                           onTap: () =>
                               setState(() => _method = PaymentMethod.cod),
                         ),
@@ -327,7 +328,7 @@ class _AddressSection extends StatelessWidget {
               child: Text(error!,
                   style: AppTypography.bodyMd.copyWith(color: AppColors.ash)),
             ),
-            TextButton(onPressed: onRetry, child: const Text('Retry')),
+            TextButton(onPressed: onRetry, child: const Text('Thử lại')),
           ],
         ),
       );
@@ -342,7 +343,7 @@ class _AddressSection extends StatelessWidget {
                 color: AppColors.accentPinkDeep),
             const SizedBox(width: 12),
             Expanded(
-              child: Text('Add a delivery address',
+              child: Text('Thêm địa chỉ giao hàng',
                   style: AppTypography.bodyStrong),
             ),
             const Icon(Icons.chevron_right, color: AppColors.stone),
@@ -394,7 +395,7 @@ class _AddressSection extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Text('Change',
+          Text('Đổi',
               style: AppTypography.buttonSm
                   .copyWith(color: AppColors.accentPinkDeep)),
         ],
@@ -434,7 +435,7 @@ class _AddressPickerSheet extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
             child: Row(
               children: [
-                Text('Choose address', style: AppTypography.headingMd),
+                Text('Chọn địa chỉ', style: AppTypography.headingMd),
               ],
             ),
           ),
@@ -499,7 +500,7 @@ class _AddressPickerSheet extends StatelessWidget {
                 children: [
                   const Icon(Icons.add, color: AppColors.accentPinkDeep),
                   const SizedBox(width: 12),
-                  Text('Add new address', style: AppTypography.bodyStrong),
+                  Text('Thêm địa chỉ mới', style: AppTypography.bodyStrong),
                 ],
               ),
             ),
@@ -569,14 +570,14 @@ class _SummaryLine extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis),
               const SizedBox(height: 2),
-              Text('Qty ${line.quantity}',
+              Text('SL ${line.quantity}',
                   style:
                       AppTypography.captionSm.copyWith(color: AppColors.mute)),
             ],
           ),
         ),
         const SizedBox(width: 8),
-        Text('\$${line.subtotal.toStringAsFixed(2)}',
+        Text(Formatters.vnd(line.subtotal),
             style: AppTypography.bodyStrong
                 .copyWith(color: AppColors.accentPinkDeep)),
       ],
@@ -596,7 +597,7 @@ class _NoteField extends StatelessWidget {
       minLines: 2,
       style: AppTypography.bodyMd,
       decoration: InputDecoration(
-        hintText: 'e.g. Call me when you arrive at the gate',
+        hintText: 'Ví dụ: Gọi cho mình khi đến cổng nhé',
         filled: true,
         fillColor: AppColors.canvas,
         contentPadding: const EdgeInsets.all(16),
@@ -697,7 +698,7 @@ class _CheckoutBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label =
-        method == PaymentMethod.vnpay ? 'Pay with VNPay' : 'Place order';
+        method == PaymentMethod.vnpay ? 'Thanh toán với VNPay' : 'Đặt hàng';
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.canvas,
@@ -718,15 +719,15 @@ class _CheckoutBar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _Row(label: 'Subtotal', value: subtotal),
+          _Row(label: 'Tạm tính', value: subtotal),
           const SizedBox(height: 6),
           _Row(
-            label: shipping == 0 ? 'Shipping (Free!)' : 'Shipping',
+            label: shipping == 0 ? 'Vận chuyển (Miễn phí!)' : 'Vận chuyển',
             value: shipping,
             highlight: shipping == 0,
           ),
           const Divider(height: 24, color: AppColors.hairlineSoft),
-          _Row(label: 'Total', value: total, isBold: true),
+          _Row(label: 'Tổng cộng', value: total, isBold: true),
           const SizedBox(height: 16),
           DecoratedBox(
             decoration: BoxDecoration(
@@ -754,7 +755,7 @@ class _CheckoutBar extends StatelessWidget {
                             ),
                           )
                         : Text(
-                            '$label  •  \$${total.toStringAsFixed(2)}',
+                            '$label  •  ${Formatters.vnd(total)}',
                             style: AppTypography.buttonLg
                                 .copyWith(color: AppColors.onPrimary),
                           ),
@@ -791,7 +792,7 @@ class _Row extends StatelessWidget {
                   .copyWith(color: AppColors.charcoal)),
         ),
         Text(
-          value == 0 && highlight ? 'Free' : '\$${value.toStringAsFixed(2)}',
+          value == 0 && highlight ? 'Miễn phí' : Formatters.vnd(value),
           style: (isBold ? AppTypography.bodyStrong : AppTypography.bodyMd)
               .copyWith(
             color: highlight

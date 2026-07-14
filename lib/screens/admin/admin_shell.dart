@@ -26,10 +26,10 @@ class _AdminShellState extends State<AdminShell> {
   ];
 
   static const _navItems = [
-    _AdminNavItem(icon: Icons.dashboard_rounded, label: 'Dashboard'),
-    _AdminNavItem(icon: Icons.receipt_long_rounded, label: 'Orders'),
-    _AdminNavItem(icon: Icons.inventory_2_rounded, label: 'Warehouse'),
-    _AdminNavItem(icon: Icons.group_rounded, label: 'Users'),
+    _AdminNavItem(icon: Icons.dashboard_rounded, label: 'Tổng quan'),
+    _AdminNavItem(icon: Icons.receipt_long_rounded, label: 'Đơn hàng'),
+    _AdminNavItem(icon: Icons.inventory_2_rounded, label: 'Kho hàng'),
+    _AdminNavItem(icon: Icons.group_rounded, label: 'Khách hàng'),
   ];
 
   @override
@@ -193,7 +193,7 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
                 IconButton(
                   icon: const Icon(Icons.logout_rounded, color: AppColors.sale),
                   onPressed: () => _confirmLogout(context),
-                  tooltip: 'Log out',
+                  tooltip: 'Đăng xuất',
                 ),
             ],
           ),
@@ -211,25 +211,25 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         title: Text(
-          'Log out?',
+          'Đăng xuất?',
           style: AppTypography.headingMd.copyWith(color: AppColors.ink),
         ),
         content: Text(
-          'Are you sure you want to log out from the admin panel?',
+          'Bạn chắc chắn muốn đăng xuất khỏi trang quản trị?',
           style: AppTypography.bodyMd.copyWith(color: AppColors.mute),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(
-              'Cancel',
+              'Huỷ',
               style: AppTypography.buttonSm.copyWith(color: AppColors.mute),
             ),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(
-              'Log out',
+              'Đăng xuất',
               style: AppTypography.buttonSm.copyWith(color: AppColors.sale),
             ),
           ),

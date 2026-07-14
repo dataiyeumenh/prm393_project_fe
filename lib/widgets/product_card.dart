@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../models/product.dart';
 import '../../state/cart_state.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/formatters.dart';
 
 class ProductCard extends StatelessWidget {
   const ProductCard({
@@ -207,7 +208,7 @@ class _PriceRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            '\$${p.price.toStringAsFixed(2)}',
+            Formatters.vnd(p.price),
             style: AppTypography.bodyStrong.copyWith(
               color: AppColors.accentPinkDeep,
               fontWeight: FontWeight.w700,
@@ -215,7 +216,7 @@ class _PriceRow extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            '\$${p.originalPrice!.toStringAsFixed(2)}',
+            Formatters.vnd(p.originalPrice!),
             style: AppTypography.captionSm.copyWith(
               color: AppColors.ash,
               decoration: TextDecoration.lineThrough,
@@ -225,7 +226,7 @@ class _PriceRow extends StatelessWidget {
       );
     }
     return Text(
-      '\$${p.price.toStringAsFixed(2)}',
+      Formatters.vnd(p.price),
       style: AppTypography.bodyStrong.copyWith(
         color: AppColors.ink,
         fontWeight: FontWeight.w700,
@@ -265,7 +266,7 @@ class _QuickAddButton extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '${product.name} added to cart',
+                      'Đã thêm ${product.name} vào giỏ hàng',
                       style: AppTypography.captionMd
                           .copyWith(color: AppColors.onPrimary),
                       maxLines: 1,

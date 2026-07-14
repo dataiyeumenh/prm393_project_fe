@@ -9,6 +9,7 @@ import '../../state/cart_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/disclosure_row.dart';
 import '../../widgets/primary_button.dart';
+import '../../utils/formatters.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({
@@ -54,7 +55,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         });
       } else {
         setState(() {
-          _error = result.error ?? 'Failed to load product';
+          _error = result.error ?? 'Không tải được sản phẩm';
           _loading = false;
         });
       }
@@ -103,7 +104,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   });
                   _loadProduct();
                 },
-                child: const Text('Retry'),
+                child: const Text('Thử lại'),
               ),
             ],
           ),
@@ -242,7 +243,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             Row(
                               children: [
                                 Text(
-                                  '\$${_price.toStringAsFixed(0)}',
+                                  Formatters.vnd(_price),
                                   style: AppTypography.headingLg,
                                 ),
                                 const Spacer(),
@@ -259,8 +260,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   ),
                                   child: Text(
                                     _stockQuantity > 0
-                                        ? '$_stockQuantity in stock'
-                                        : 'Out of stock',
+                                        ? 'Còn $_stockQuantity sản phẩm'
+                                        : 'Hết hàng',
                                     style: AppTypography.captionSm.copyWith(
                                       color: _stockQuantity > 0
                                           ? AppColors.success
@@ -281,7 +282,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           padding:
                               const EdgeInsets.symmetric(horizontal: 20),
                           child: DisclosureRow(
-                            label: 'Product Details',
+                            label: 'Chi tiết sản phẩm',
                             initiallyOpen: true,
                             child: Text(
                               _description,
@@ -307,10 +308,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         padding:
                             const EdgeInsets.symmetric(horizontal: 20),
                         child: DisclosureRow(
-                          label: 'Shipping & Returns',
+                          label: 'Vận chuyển & đổi trả',
                           child: Text(
-                            'Free shipping on orders over \$50. 30-day hassle-free returns. '
-                            'Members get free express shipping on all orders.',
+                            'Miễn phí vận chuyển cho đơn từ 1.250.000 ₫. Đổi trả trong 30 ngày, đơn giản nhanh chóng. '
+                            'Thành viên được miễn phí vận chuyển nhanh cho mọi đơn hàng.',
                             style: AppTypography.bodyMd
                                 .copyWith(color: AppColors.charcoal),
                           ),
@@ -377,8 +378,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     Expanded(
                       child: PrimaryButton(
                         label: _stockQuantity > 0
-                            ? 'Add to Bag  •  \$${(_price * _quantity).toStringAsFixed(0)}'
-                            : 'Notify Me',
+                            ? 'Thêm vào giỏ  •  ${Formatters.vnd(_price * _quantity)}'
+                            : 'Báo khi có hàng',
                         expand: true,
                         icon: _stockQuantity > 0
                             ? Icons.shopping_bag_outlined
@@ -417,7 +418,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
-                                        'Added $_quantity × $_name to bag.',
+                                        'Đã thêm $_quantity × $_name vào giỏ hàng.',
                                         style: AppTypography.captionMd
                                             .copyWith(color: AppColors.onPrimary),
                                       ),
@@ -436,7 +437,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: const Text(
-                                  'We\'ll notify you when it\'s back.',
+                                  'Chúng tôi sẽ báo khi có hàng trở lại.',
                                 ),
                                 behavior: SnackBarBehavior.floating,
                                 shape: RoundedRectangleBorder(

@@ -81,6 +81,7 @@ class _PrimaryButtonState extends State<PrimaryButton> {
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Row(
                 mainAxisSize: widget.expand ? MainAxisSize.max : MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (widget.icon != null) ...[
                     Icon(widget.icon, size: 18, color: _fg()),
