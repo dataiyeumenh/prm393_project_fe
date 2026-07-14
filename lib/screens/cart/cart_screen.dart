@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../state/cart_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_background.dart';
+import '../checkout/checkout_screen.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -249,42 +250,9 @@ class _CheckoutBar extends StatelessWidget {
               child: InkWell(
                 borderRadius: BorderRadius.circular(AppRadius.full),
                 onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      backgroundColor: AppColors.canvas,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                      ),
-                      title: Row(
-                        children: [
-                          const Icon(
-                            Icons.celebration,
-                            color: AppColors.accentPink,
-                          ),
-                          const SizedBox(width: 8),
-                          Text('Order placed!', style: AppTypography.headingMd),
-                        ],
-                      ),
-                      content: Text(
-                        'Thanks for shopping with PawFuel. '
-                        '${cart.itemCount} item(s) will be on their way soon.',
-                        style: AppTypography.bodyMd,
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            cart.clear();
-                            Navigator.of(ctx).pop();
-                            Navigator.of(context).pop();
-                          },
-                          child: Text(
-                            'Yay!',
-                            style: AppTypography.buttonMd
-                                .copyWith(color: AppColors.accentPinkDeep),
-                          ),
-                        ),
-                      ],
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const CheckoutScreen(),
                     ),
                   );
                 },
