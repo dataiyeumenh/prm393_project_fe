@@ -148,7 +148,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                             controller: _scrollCtrl,
                             padding: const EdgeInsets.all(16),
                             itemCount: _users.length + (_hasMore ? 1 : 0),
-                            separatorBuilder: (_, __) =>
+                            separatorBuilder: (_, _) =>
                                 const SizedBox(height: 10),
                             itemBuilder: (ctx, i) {
                               if (i == _users.length) {

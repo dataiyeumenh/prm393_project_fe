@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/auth_state.dart';
+import '../../state/cart_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_background.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/primary_nav_bar.dart';
-import '../../widgets/promo_badge.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -37,11 +37,15 @@ class _LoginScreenState extends State<LoginScreen> {
       _loading = true;
       _error = null;
     });
+    final auth = context.read<AuthState>();
+    final cart = context.read<CartState>();
     try {
-      await context.read<AuthState>().login(
+      await auth.login(
         _emailCtrl.text.trim(),
         _passwordCtrl.text,
       );
+      // Restore the user's server-side cart so it isn't empty after login.
+      if (!auth.isAdmin) await cart.loadFromServer();
       if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
     } on AuthException catch (e) {
       setState(() => _error = e.message);

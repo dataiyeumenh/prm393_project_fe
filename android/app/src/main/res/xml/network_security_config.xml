@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Some Android system images don't yet trust "Sectigo Public Server
+  Authentication Root E46" (issued Sept 2025), the root VNPay's sandbox
+  cert chains through via "ZeroSSL ECC DV SSL CA 2" — even though the
+  chain itself is valid (verified independently via `openssl s_client`,
+  Verify return code: 0). Chrome trusts it via its own self-updating
+  Chrome Root Store; embedded WebView instead relies on the OS system CA
+  store, which lags behind on some devices, and rejects the connection
+  with CERT_AUTHORITY_INVALID.
+
+  This pins the intermediate CA as an additional trust anchor scoped only
+  to vnpayment.vn — it does not weaken validation for any other domain,
+  and does not disable certificate validation for vnpayment.vn either
+  (an incorrect/expired/mismatched cert still fails).
+-->
+<network-security-config>
+    <domain-config>
+        <domain includeSubdomains="true">vnpayment.vn</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="@raw/zerossl_ecc_dv_ca2" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

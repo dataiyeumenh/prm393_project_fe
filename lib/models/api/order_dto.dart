@@ -218,6 +218,7 @@ class OrderDetailDTO {
       customerName:
           json['customerName'] as String? ??
           json['userName'] as String? ??
+          json['receiverName'] as String? ??
           'Unknown',
       customerEmail:
           json['customerEmail'] as String? ??
@@ -226,7 +227,9 @@ class OrderDetailDTO {
       customerPhone:
           json['customerPhone'] as String? ?? json['phone'] as String?,
       shippingAddress:
-          json['shippingAddress'] as String? ?? json['address'] as String?,
+          json['shippingAddress'] as String? ??
+          json['address'] as String? ??
+          json['streetAddress'] as String?,
       status: OrderStatusX.fromApi(json['status'] as String?),
       totalAmount:
           (json['totalAmount'] as num?)?.toDouble() ??
@@ -242,7 +245,7 @@ class OrderDetailDTO {
       updatedAt: json['updatedAt'] != null
           ? DateTime.tryParse(json['updatedAt'] as String)
           : null,
-      notes: json['notes'] as String?,
+      notes: json['notes'] as String? ?? json['note'] as String?,
     );
   }
 }
@@ -253,4 +256,28 @@ class UpdateOrderStatusRequest {
   const UpdateOrderStatusRequest({required this.status});
 
   Map<String, dynamic> toJson() => {'status': status};
+}
+
+/// Body for `POST /api/v1/orders/checkout`.
+class CheckoutRequest {
+  final String addressId;
+  final String note;
+
+  const CheckoutRequest({required this.addressId, this.note = ''});
+
+  Map<String, dynamic> toJson() => {'addressId': addressId, 'note': note};
+}
+
+/// Response of `GET /api/v1/payments/vnpay/create-url`.
+class PaymentUrlResponse {
+  final String paymentUrl;
+
+  PaymentUrlResponse({required this.paymentUrl});
+
+  factory PaymentUrlResponse.fromJson(Map<String, dynamic> json) {
+    return PaymentUrlResponse(
+      paymentUrl:
+          json['paymentUrl'] as String? ?? json['url'] as String? ?? '',
+    );
+  }
 }

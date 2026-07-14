@@ -453,7 +453,7 @@ class _ApiProductCard extends StatelessWidget {
                         child: Image.network(
                           product.primaryImageUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Center(
+                          errorBuilder: (_, _, _) => const Center(
                             child: Icon(Icons.image, color: AppColors.mute),
                           ),
                         ),

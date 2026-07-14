@@ -383,8 +383,8 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
         onPressed: _openProductCreator,
         backgroundColor: AppColors.ink,
         foregroundColor: AppColors.onPrimary,
-        child: const Icon(Icons.add),
         tooltip: 'Add Product',
+        child: const Icon(Icons.add),
       ),
       body: Column(
         children: [
@@ -516,7 +516,7 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
                             itemCount:
                                 filtered.length +
                                 (_hasMore && !_hasActiveFilter ? 1 : 0),
-                            separatorBuilder: (_, __) =>
+                            separatorBuilder: (_, _) =>
                                 const SizedBox(height: 10),
                             itemBuilder: (ctx, i) {
                               if (i == filtered.length) {
@@ -769,7 +769,7 @@ class _ProductStockCardState extends State<_ProductStockCard>
                         ? Image.network(
                             product.primaryImageUrl!,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Icon(
+                            errorBuilder: (_, _, _) => const Icon(
                               Icons.inventory_2_outlined,
                               color: AppColors.mute,
                               size: 22,
@@ -1124,59 +1124,22 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                   ],
                 ),
                 const SizedBox(height: 14),
-                if (hasCategories)
-                  DropdownButtonFormField<int>(
-                    value: _selectedCategoryId,
-                    isExpanded: true,
-                    decoration: const InputDecoration(labelText: 'Category *'),
-                    hint: const Text('Select category'),
-                    items: widget.categories
-                        .map(
-                          (c) => DropdownMenuItem(
-                            value: c.id,
-                            child: Text(c.name),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedCategoryId = v),
-                  )
-                else
-                  TextField(
-                    controller: _categoryIdCtrl,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: const InputDecoration(
-                      labelText: 'Category ID *',
-                      helperText:
-                          'Category list unavailable. Enter category id.',
-                    ),
+                DropdownButtonFormField<int>(
+                  initialValue: _selectedCategoryId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(labelText: 'Category *'),
+                  hint: Text(
+                    hasCategories
+                        ? 'Select category'
+                        : 'No categories available',
                   ),
                 const SizedBox(height: 14),
-                if (hasBrands)
-                  DropdownButtonFormField<int>(
-                    value: _selectedBrandId,
-                    isExpanded: true,
-                    decoration: const InputDecoration(labelText: 'Brand *'),
-                    hint: const Text('Select brand'),
-                    items: widget.brands
-                        .map(
-                          (b) => DropdownMenuItem(
-                            value: b.id,
-                            child: Text(b.name),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedBrandId = v),
-                  )
-                else
-                  TextField(
-                    controller: _brandIdCtrl,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: const InputDecoration(
-                      labelText: 'Brand ID *',
-                      helperText: 'Brand list unavailable. Enter brand id.',
-                    ),
+                DropdownButtonFormField<int>(
+                  initialValue: _selectedBrandId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(labelText: 'Brand *'),
+                  hint: Text(
+                    hasBrands ? 'Select brand' : 'No brands available',
                   ),
                 const SizedBox(height: 14),
                 OutlinedButton.icon(
@@ -1451,60 +1414,25 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
                 ),
                 const SizedBox(height: 14),
                 // Category dropdown
-                if (widget.categories.isNotEmpty)
-                  DropdownButtonFormField<int>(
-                    value: categoryValue,
-                    isExpanded: true,
-                    decoration: const InputDecoration(labelText: 'Category'),
-                    hint: const Text('Select category'),
-                    items: widget.categories
-                        .map(
-                          (c) => DropdownMenuItem(
-                            value: c.id,
-                            child: Text(c.name),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedCategoryId = v),
-                  )
-                else
-                  TextField(
-                    controller: _categoryIdCtrl,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: const InputDecoration(
-                      labelText: 'Category ID',
-                      helperText:
-                          'Category list unavailable. Enter category id.',
-                    ),
+                DropdownButtonFormField<int>(
+                  initialValue: categoryValue,
+                  isExpanded: true,
+                  decoration: const InputDecoration(labelText: 'Category'),
+                  hint: Text(
+                    widget.categories.isNotEmpty
+                        ? 'Select category'
+                        : 'No categories available',
                   ),
                 const SizedBox(height: 14),
                 // Brand dropdown
-                if (widget.brands.isNotEmpty)
-                  DropdownButtonFormField<int>(
-                    value: brandValue,
-                    isExpanded: true,
-                    decoration: const InputDecoration(labelText: 'Brand'),
-                    hint: const Text('Select brand'),
-                    items: widget.brands
-                        .map(
-                          (b) => DropdownMenuItem(
-                            value: b.id,
-                            child: Text(b.name),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedBrandId = v),
-                  )
-                else
-                  TextField(
-                    controller: _brandIdCtrl,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: const InputDecoration(
-                      labelText: 'Brand ID',
-                      helperText: 'Brand list unavailable. Enter brand id.',
-                    ),
+                DropdownButtonFormField<int>(
+                  initialValue: brandValue,
+                  isExpanded: true,
+                  decoration: const InputDecoration(labelText: 'Brand'),
+                  hint: Text(
+                    widget.brands.isNotEmpty
+                        ? 'Select brand'
+                        : 'No brands available',
                   ),
                 const SizedBox(height: 24),
                 Row(

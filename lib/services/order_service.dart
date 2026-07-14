@@ -1,9 +1,57 @@
+import '../models/api/cart_dto.dart';
 import '../models/api/order_dto.dart';
 import '../models/api/product_dto.dart';
 import 'api_service.dart';
 import 'product_service.dart';
 
 class OrderService {
+  /// Pushes the locally-held cart lines up to the server cart so that
+  /// `POST /orders/checkout` (which reads the server-side cart) reflects
+  /// exactly what the user sees. The cart endpoint upserts by productId,
+  /// so sending each line once with its final quantity is idempotent.
+  static Future<ApiResult<void>> syncCart(List<CartItemRequest> items) async {
+    try {
+      for (final item in items) {
+        final response = await ApiService.dio.post(
+          '/api/v1/cart',
+          data: item.toJson(),
+        );
+        if (response.statusCode != 200 && response.statusCode != 201) {
+          return ApiResult.fail(
+            response.data['message'] as String? ?? 'Failed to sync cart',
+          );
+        }
+      }
+      return ApiResult.success(null);
+    } catch (e) {
+      return ApiResult.fail(_extractError(e));
+    }
+  }
+
+  /// Customer: `POST /api/v1/orders/checkout` — creates an order (PENDING)
+  /// from the server-side cart.
+  static Future<ApiResult<OrderSummaryDTO>> checkout(
+    CheckoutRequest request,
+  ) async {
+    try {
+      final response = await ApiService.dio.post(
+        '/api/v1/orders/checkout',
+        data: request.toJson(),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final order = OrderSummaryDTO.fromJson(
+          response.data['data'] as Map<String, dynamic>,
+        );
+        return ApiResult.success(order);
+      }
+      return ApiResult.fail(
+        response.data['message'] as String? ?? 'Checkout failed',
+      );
+    } catch (e) {
+      return ApiResult.fail(_extractError(e));
+    }
+  }
+
   /// Admin: get all orders paginated with optional status filter.
   static Future<ApiResult<PageResponse<OrderSummaryDTO>>> getOrders({
     String? status,
@@ -22,7 +70,7 @@ class OrderService {
       if (status != null) params['status'] = status;
 
       final response = await ApiService.dio.get(
-        '/api/v1/orders',
+        '/api/v1/admin/orders',
         queryParameters: params,
       );
 
@@ -80,7 +128,7 @@ class OrderService {
   ) async {
     try {
       final response = await ApiService.dio.put(
-        '/api/v1/orders/$orderId/status',
+        '/api/v1/admin/orders/$orderId/status',
         data: UpdateOrderStatusRequest(status: newStatus.apiValue).toJson(),
       );
       if (response.statusCode == 200 || response.statusCode == 204) {
