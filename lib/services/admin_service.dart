@@ -268,6 +268,20 @@ class AdminService {
   }
 
   static String _extractError(dynamic e) {
+    if (e is DioException) {
+      final status = e.response?.statusCode;
+      final data = e.response?.data;
+      if (data is Map && data['message'] is String) {
+        return data['message'] as String;
+      }
+      if (status == 401) return 'Unauthorized — please log in again.';
+      if (status == 403) {
+        return 'Access denied (403). This account does not have admin permission.';
+      }
+      if (status == 404) return 'Endpoint not found (404).';
+      if (status != null) return 'Server error ($status). Please try again.';
+    }
+
     final str = e.toString();
     // Try to pull a backend message field
     final msgMatch = RegExp(r'"message"\s*:\s*"([^"]+)"').firstMatch(str);
@@ -284,8 +298,8 @@ class AdminService {
     return 'An error occurred. Please try again.';
   }
 
-  /// Convert UI/internal keys to API update keys.
-  /// Backend update contract uses snake_case for ids and stock quantity.
+  /// Convert UI/internal keys to API keys expected by backend.
+  /// Current backend contract uses camelCase fields: stock/categoryId/brandId.
   static Map<String, dynamic> _normalizeProductPayload(
     Map<String, dynamic> input,
   ) {
@@ -295,15 +309,15 @@ class AdminService {
         case 'stock':
         case 'stockQuantity':
         case 'stock_quantity':
-          out['stock_quantity'] = value;
+          out['stock'] = value;
           break;
         case 'brandId':
         case 'brand_id':
-          out['brand_id'] = value;
+          out['brandId'] = value;
           break;
         case 'categoryId':
         case 'category_id':
-          out['category_id'] = value;
+          out['categoryId'] = value;
           break;
         default:
           out[key] = value;

@@ -917,6 +917,8 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
   final _skuCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
   final _stockCtrl = TextEditingController();
+  final _categoryIdCtrl = TextEditingController();
+  final _brandIdCtrl = TextEditingController();
 
   final _picker = ImagePicker();
 
@@ -934,6 +936,8 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
     _skuCtrl.dispose();
     _priceCtrl.dispose();
     _stockCtrl.dispose();
+    _categoryIdCtrl.dispose();
+    _brandIdCtrl.dispose();
     super.dispose();
   }
 
@@ -964,6 +968,9 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
     final sku = _skuCtrl.text.trim();
     final price = double.tryParse(_priceCtrl.text.trim());
     final stock = int.tryParse(_stockCtrl.text.trim());
+    final categoryId =
+        _selectedCategoryId ?? int.tryParse(_categoryIdCtrl.text.trim());
+    final brandId = _selectedBrandId ?? int.tryParse(_brandIdCtrl.text.trim());
 
     if (name.isEmpty) {
       setState(() => _error = 'Vui lòng nhập tên sản phẩm');
@@ -991,8 +998,8 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
       'description': description,
       'price': price,
       'stock': stock,
-      'categoryId': _selectedCategoryId,
-      'brandId': _selectedBrandId,
+      'categoryId': categoryId,
+      'brandId': brandId,
       if (sku.isNotEmpty) 'sku': sku,
     };
 
@@ -1121,16 +1128,6 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                         ? 'Chọn danh mục'
                         : 'Chưa có danh mục nào',
                   ),
-                  items: widget.categories
-                      .map(
-                        (c) =>
-                            DropdownMenuItem(value: c.id, child: Text(c.name)),
-                      )
-                      .toList(),
-                  onChanged: hasCategories
-                      ? (v) => setState(() => _selectedCategoryId = v)
-                      : null,
-                ),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<int>(
                   initialValue: _selectedBrandId,
@@ -1139,16 +1136,6 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                   hint: Text(
                     hasBrands ? 'Chọn thương hiệu' : 'Chưa có thương hiệu nào',
                   ),
-                  items: widget.brands
-                      .map(
-                        (b) =>
-                            DropdownMenuItem(value: b.id, child: Text(b.name)),
-                      )
-                      .toList(),
-                  onChanged: hasBrands
-                      ? (v) => setState(() => _selectedBrandId = v)
-                      : null,
-                ),
                 const SizedBox(height: 14),
                 OutlinedButton.icon(
                   onPressed: _pickingImage ? null : _pickImage,
@@ -1242,6 +1229,8 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
   late final TextEditingController _descCtrl;
   late final TextEditingController _priceCtrl;
   late final TextEditingController _stockCtrl;
+  late final TextEditingController _categoryIdCtrl;
+  late final TextEditingController _brandIdCtrl;
   int? _selectedCategoryId;
   int? _selectedBrandId;
 
@@ -1254,6 +1243,12 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
       text: widget.product.price.toStringAsFixed(2),
     );
     _stockCtrl = TextEditingController(text: '${widget.product.stockQuantity}');
+    _categoryIdCtrl = TextEditingController(
+      text: widget.product.categoryId?.toString() ?? '',
+    );
+    _brandIdCtrl = TextEditingController(
+      text: widget.product.brandId?.toString() ?? '',
+    );
     _selectedCategoryId = widget.product.categoryId;
     _selectedBrandId = widget.product.brandId;
   }
@@ -1264,6 +1259,8 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
     _descCtrl.dispose();
     _priceCtrl.dispose();
     _stockCtrl.dispose();
+    _categoryIdCtrl.dispose();
+    _brandIdCtrl.dispose();
     super.dispose();
   }
 
@@ -1272,6 +1269,9 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
     final description = _descCtrl.text.trim();
     final price = double.tryParse(_priceCtrl.text.trim());
     final stock = int.tryParse(_stockCtrl.text.trim());
+    final categoryId =
+        _selectedCategoryId ?? int.tryParse(_categoryIdCtrl.text.trim());
+    final brandId = _selectedBrandId ?? int.tryParse(_brandIdCtrl.text.trim());
     if (name.isEmpty || price == null || stock == null) return;
 
     final updates = <String, dynamic>{};
@@ -1288,14 +1288,12 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
       updates['stock'] = stock;
     }
 
-    if (_selectedCategoryId != widget.product.categoryId &&
-        _selectedCategoryId != null) {
-      updates['categoryId'] = _selectedCategoryId;
+    if (categoryId != widget.product.categoryId && categoryId != null) {
+      updates['categoryId'] = categoryId;
     }
 
-    if (_selectedBrandId != widget.product.brandId &&
-        _selectedBrandId != null) {
-      updates['brandId'] = _selectedBrandId;
+    if (brandId != widget.product.brandId && brandId != null) {
+      updates['brandId'] = brandId;
     }
 
     Navigator.of(context).pop(updates);
@@ -1420,16 +1418,6 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
                         ? 'Chọn danh mục'
                         : 'Chưa có danh mục nào',
                   ),
-                  items: widget.categories
-                      .map(
-                        (c) =>
-                            DropdownMenuItem(value: c.id, child: Text(c.name)),
-                      )
-                      .toList(),
-                  onChanged: widget.categories.isNotEmpty
-                      ? (v) => setState(() => _selectedCategoryId = v)
-                      : null,
-                ),
                 const SizedBox(height: 14),
                 // Brand dropdown
                 DropdownButtonFormField<int>(
@@ -1441,16 +1429,6 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
                         ? 'Chọn thương hiệu'
                         : 'Chưa có thương hiệu nào',
                   ),
-                  items: widget.brands
-                      .map(
-                        (b) =>
-                            DropdownMenuItem(value: b.id, child: Text(b.name)),
-                      )
-                      .toList(),
-                  onChanged: widget.brands.isNotEmpty
-                      ? (v) => setState(() => _selectedBrandId = v)
-                      : null,
-                ),
                 const SizedBox(height: 24),
                 Row(
                   children: [
