@@ -200,10 +200,12 @@ class AdminService {
   /// The server expects a form field named "product" containing a JSON string.
   static Future<ApiResult<bool>> updateProduct(
     String productId,
-    Map<String, dynamic> updates,
+    Map<String, dynamic> updates, {
+    MultipartFile? image,
+  }
   ) async {
     try {
-      if (updates.isEmpty) {
+      if (updates.isEmpty && image == null) {
         return ApiResult.fail('No fields to update');
       }
 
@@ -215,12 +217,16 @@ class AdminService {
 
       final payload = _normalizeProductPayload(sanitized);
 
-      if (payload.isEmpty) {
+      if (payload.isEmpty && image == null) {
         return ApiResult.fail('No valid fields to update');
       }
 
       // PUT multipart/form-data with product JSON string payload.
-      final formData = FormData.fromMap({'product': jsonEncode(payload)});
+      final formMap = <String, dynamic>{'product': jsonEncode(payload)};
+      if (image != null) {
+        formMap['image'] = image;
+      }
+      final formData = FormData.fromMap(formMap);
 
       final putResp = await ApiService.dio.put(
         '/api/v1/admin/products/$productId',

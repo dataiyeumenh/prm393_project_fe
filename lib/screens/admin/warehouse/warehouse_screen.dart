@@ -234,7 +234,7 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
   }
 
   Future<void> _openProductEditor(AdminWarehouseProductDTO product) async {
-    final result = await showModalBottomSheet<Map<String, dynamic>>(
+    final result = await showModalBottomSheet<_ProductEditResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -244,9 +244,23 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
         brands: _brands,
       ),
     );
-    if (result == null || result.isEmpty) return;
+    if (result == null) return;
 
-    final updateResult = await AdminService.updateProduct(product.id, result);
+    MultipartFile? imageFile;
+    if (result.imageBytes != null && result.imageFileName != null) {
+      imageFile = MultipartFile.fromBytes(
+        result.imageBytes!,
+        filename: result.imageFileName,
+      );
+    }
+
+    if (result.updates.isEmpty && imageFile == null) return;
+
+    final updateResult = await AdminService.updateProduct(
+      product.id,
+      result.updates,
+      image: imageFile,
+    );
     if (!mounted) return;
     if (updateResult.isSuccess) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -902,6 +916,18 @@ class _ProductCreateResult {
   final String? imageFileName;
 }
 
+class _ProductEditResult {
+  const _ProductEditResult({
+    required this.updates,
+    this.imageBytes,
+    this.imageFileName,
+  });
+
+  final Map<String, dynamic> updates;
+  final Uint8List? imageBytes;
+  final String? imageFileName;
+}
+
 class _ProductCreateSheet extends StatefulWidget {
   const _ProductCreateSheet({required this.categories, required this.brands});
 
@@ -1266,8 +1292,13 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
   late final TextEditingController _stockCtrl;
   late final TextEditingController _categoryIdCtrl;
   late final TextEditingController _brandIdCtrl;
+  final _picker = ImagePicker();
+
   int? _selectedCategoryId;
   int? _selectedBrandId;
+  Uint8List? _imageBytes;
+  String? _imageFileName;
+  bool _pickingImage = false;
 
   @override
   void initState() {
@@ -1331,7 +1362,34 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
       updates['brandId'] = brandId;
     }
 
-    Navigator.of(context).pop(updates);
+    Navigator.of(context).pop(
+      _ProductEditResult(
+        updates: updates,
+        imageBytes: _imageBytes,
+        imageFileName: _imageFileName,
+      ),
+    );
+  }
+
+  Future<void> _pickImage() async {
+    if (_pickingImage) return;
+    setState(() => _pickingImage = true);
+    try {
+      final file = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 90,
+        maxWidth: 1800,
+      );
+      if (file == null || !mounted) return;
+      final bytes = await file.readAsBytes();
+      if (!mounted) return;
+      setState(() {
+        _imageBytes = bytes;
+        _imageFileName = file.name;
+      });
+    } finally {
+      if (mounted) setState(() => _pickingImage = false);
+    }
   }
 
   @override
@@ -1493,6 +1551,53 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
                       _brandIdCtrl.text = value?.toString() ?? '';
                     });
                   },
+                ),
+                const SizedBox(height: 14),
+                OutlinedButton.icon(
+                  onPressed: _pickingImage ? null : _pickImage,
+                  icon: const Icon(Icons.image_outlined),
+                  label: Text(
+                    _pickingImage
+                        ? 'Picking image...'
+                        : 'Choose new thumbnail image',
+                  ),
+                ),
+                if (_imageFileName != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _imageFileName!,
+                    style: AppTypography.utilityXs.copyWith(
+                      color: AppColors.mute,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  child: _imageBytes != null
+                      ? Image.memory(
+                          _imageBytes!,
+                          height: 120,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        )
+                      : widget.product.primaryImageUrl != null
+                      ? Image.network(
+                          widget.product.primaryImageUrl!,
+                          height: 120,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        )
+                      : Container(
+                          height: 120,
+                          width: double.infinity,
+                          color: AppColors.ash.withValues(alpha: 0.16),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.image_outlined,
+                            color: AppColors.mute.withValues(alpha: 0.6),
+                          ),
+                        ),
                 ),
                 const SizedBox(height: 24),
                 Row(
