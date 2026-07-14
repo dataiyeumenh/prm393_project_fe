@@ -918,6 +918,8 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
   final _skuCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
   final _stockCtrl = TextEditingController();
+  final _categoryIdCtrl = TextEditingController();
+  final _brandIdCtrl = TextEditingController();
 
   final _picker = ImagePicker();
 
@@ -935,6 +937,8 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
     _skuCtrl.dispose();
     _priceCtrl.dispose();
     _stockCtrl.dispose();
+    _categoryIdCtrl.dispose();
+    _brandIdCtrl.dispose();
     super.dispose();
   }
 
@@ -965,6 +969,9 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
     final sku = _skuCtrl.text.trim();
     final price = double.tryParse(_priceCtrl.text.trim());
     final stock = int.tryParse(_stockCtrl.text.trim());
+    final categoryId =
+        _selectedCategoryId ?? int.tryParse(_categoryIdCtrl.text.trim());
+    final brandId = _selectedBrandId ?? int.tryParse(_brandIdCtrl.text.trim());
 
     if (name.isEmpty) {
       setState(() => _error = 'Product name is required');
@@ -978,12 +985,16 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
       setState(() => _error = 'Valid stock quantity is required');
       return;
     }
-    if (_selectedCategoryId == null) {
-      setState(() => _error = 'Please select a category');
+    if (categoryId == null || categoryId <= 0) {
+      setState(
+        () => _error = 'Please select a category or enter a valid category id',
+      );
       return;
     }
-    if (_selectedBrandId == null) {
-      setState(() => _error = 'Please select a brand');
+    if (brandId == null || brandId <= 0) {
+      setState(
+        () => _error = 'Please select a brand or enter a valid brand id',
+      );
       return;
     }
 
@@ -992,8 +1003,8 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
       'description': description,
       'price': price,
       'stock': stock,
-      'categoryId': _selectedCategoryId,
-      'brandId': _selectedBrandId,
+      'categoryId': categoryId,
+      'brandId': brandId,
       if (sku.isNotEmpty) 'sku': sku,
     };
 
@@ -1113,43 +1124,60 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                   ],
                 ),
                 const SizedBox(height: 14),
-                DropdownButtonFormField<int>(
-                  value: _selectedCategoryId,
-                  isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Category *'),
-                  hint: Text(
-                    hasCategories
-                        ? 'Select category'
-                        : 'No categories available',
+                if (hasCategories)
+                  DropdownButtonFormField<int>(
+                    value: _selectedCategoryId,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Category *'),
+                    hint: const Text('Select category'),
+                    items: widget.categories
+                        .map(
+                          (c) => DropdownMenuItem(
+                            value: c.id,
+                            child: Text(c.name),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedCategoryId = v),
+                  )
+                else
+                  TextField(
+                    controller: _categoryIdCtrl,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: const InputDecoration(
+                      labelText: 'Category ID *',
+                      helperText:
+                          'Category list unavailable. Enter category id.',
+                    ),
                   ),
-                  items: widget.categories
-                      .map(
-                        (c) =>
-                            DropdownMenuItem(value: c.id, child: Text(c.name)),
-                      )
-                      .toList(),
-                  onChanged: hasCategories
-                      ? (v) => setState(() => _selectedCategoryId = v)
-                      : null,
-                ),
                 const SizedBox(height: 14),
-                DropdownButtonFormField<int>(
-                  value: _selectedBrandId,
-                  isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Brand *'),
-                  hint: Text(
-                    hasBrands ? 'Select brand' : 'No brands available',
+                if (hasBrands)
+                  DropdownButtonFormField<int>(
+                    value: _selectedBrandId,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Brand *'),
+                    hint: const Text('Select brand'),
+                    items: widget.brands
+                        .map(
+                          (b) => DropdownMenuItem(
+                            value: b.id,
+                            child: Text(b.name),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedBrandId = v),
+                  )
+                else
+                  TextField(
+                    controller: _brandIdCtrl,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: const InputDecoration(
+                      labelText: 'Brand ID *',
+                      helperText: 'Brand list unavailable. Enter brand id.',
+                    ),
                   ),
-                  items: widget.brands
-                      .map(
-                        (b) =>
-                            DropdownMenuItem(value: b.id, child: Text(b.name)),
-                      )
-                      .toList(),
-                  onChanged: hasBrands
-                      ? (v) => setState(() => _selectedBrandId = v)
-                      : null,
-                ),
                 const SizedBox(height: 14),
                 OutlinedButton.icon(
                   onPressed: _pickingImage ? null : _pickImage,
@@ -1243,6 +1271,8 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
   late final TextEditingController _descCtrl;
   late final TextEditingController _priceCtrl;
   late final TextEditingController _stockCtrl;
+  late final TextEditingController _categoryIdCtrl;
+  late final TextEditingController _brandIdCtrl;
   int? _selectedCategoryId;
   int? _selectedBrandId;
 
@@ -1255,6 +1285,12 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
       text: widget.product.price.toStringAsFixed(2),
     );
     _stockCtrl = TextEditingController(text: '${widget.product.stockQuantity}');
+    _categoryIdCtrl = TextEditingController(
+      text: widget.product.categoryId?.toString() ?? '',
+    );
+    _brandIdCtrl = TextEditingController(
+      text: widget.product.brandId?.toString() ?? '',
+    );
     _selectedCategoryId = widget.product.categoryId;
     _selectedBrandId = widget.product.brandId;
   }
@@ -1265,6 +1301,8 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
     _descCtrl.dispose();
     _priceCtrl.dispose();
     _stockCtrl.dispose();
+    _categoryIdCtrl.dispose();
+    _brandIdCtrl.dispose();
     super.dispose();
   }
 
@@ -1273,6 +1311,9 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
     final description = _descCtrl.text.trim();
     final price = double.tryParse(_priceCtrl.text.trim());
     final stock = int.tryParse(_stockCtrl.text.trim());
+    final categoryId =
+        _selectedCategoryId ?? int.tryParse(_categoryIdCtrl.text.trim());
+    final brandId = _selectedBrandId ?? int.tryParse(_brandIdCtrl.text.trim());
     if (name.isEmpty || price == null || stock == null) return;
 
     final updates = <String, dynamic>{};
@@ -1289,14 +1330,12 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
       updates['stock'] = stock;
     }
 
-    if (_selectedCategoryId != widget.product.categoryId &&
-        _selectedCategoryId != null) {
-      updates['categoryId'] = _selectedCategoryId;
+    if (categoryId != widget.product.categoryId && categoryId != null) {
+      updates['categoryId'] = categoryId;
     }
 
-    if (_selectedBrandId != widget.product.brandId &&
-        _selectedBrandId != null) {
-      updates['brandId'] = _selectedBrandId;
+    if (brandId != widget.product.brandId && brandId != null) {
+      updates['brandId'] = brandId;
     }
 
     Navigator.of(context).pop(updates);
@@ -1412,46 +1451,61 @@ class _ProductEditSheetState extends State<_ProductEditSheet> {
                 ),
                 const SizedBox(height: 14),
                 // Category dropdown
-                DropdownButtonFormField<int>(
-                  value: categoryValue,
-                  isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Category'),
-                  hint: Text(
-                    widget.categories.isNotEmpty
-                        ? 'Select category'
-                        : 'No categories available',
+                if (widget.categories.isNotEmpty)
+                  DropdownButtonFormField<int>(
+                    value: categoryValue,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Category'),
+                    hint: const Text('Select category'),
+                    items: widget.categories
+                        .map(
+                          (c) => DropdownMenuItem(
+                            value: c.id,
+                            child: Text(c.name),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedCategoryId = v),
+                  )
+                else
+                  TextField(
+                    controller: _categoryIdCtrl,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: const InputDecoration(
+                      labelText: 'Category ID',
+                      helperText:
+                          'Category list unavailable. Enter category id.',
+                    ),
                   ),
-                  items: widget.categories
-                      .map(
-                        (c) =>
-                            DropdownMenuItem(value: c.id, child: Text(c.name)),
-                      )
-                      .toList(),
-                  onChanged: widget.categories.isNotEmpty
-                      ? (v) => setState(() => _selectedCategoryId = v)
-                      : null,
-                ),
                 const SizedBox(height: 14),
                 // Brand dropdown
-                DropdownButtonFormField<int>(
-                  value: brandValue,
-                  isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Brand'),
-                  hint: Text(
-                    widget.brands.isNotEmpty
-                        ? 'Select brand'
-                        : 'No brands available',
+                if (widget.brands.isNotEmpty)
+                  DropdownButtonFormField<int>(
+                    value: brandValue,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Brand'),
+                    hint: const Text('Select brand'),
+                    items: widget.brands
+                        .map(
+                          (b) => DropdownMenuItem(
+                            value: b.id,
+                            child: Text(b.name),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedBrandId = v),
+                  )
+                else
+                  TextField(
+                    controller: _brandIdCtrl,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: const InputDecoration(
+                      labelText: 'Brand ID',
+                      helperText: 'Brand list unavailable. Enter brand id.',
+                    ),
                   ),
-                  items: widget.brands
-                      .map(
-                        (b) =>
-                            DropdownMenuItem(value: b.id, child: Text(b.name)),
-                      )
-                      .toList(),
-                  onChanged: widget.brands.isNotEmpty
-                      ? (v) => setState(() => _selectedBrandId = v)
-                      : null,
-                ),
                 const SizedBox(height: 24),
                 Row(
                   children: [

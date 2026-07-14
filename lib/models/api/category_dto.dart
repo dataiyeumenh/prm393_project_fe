@@ -12,8 +12,13 @@ class CategoryDTO {
   });
 
   factory CategoryDTO.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
     return CategoryDTO(
-      id: json['id'] as int,
+      id: rawId is int
+          ? rawId
+          : rawId is num
+          ? rawId.toInt()
+          : int.tryParse(rawId?.toString() ?? '') ?? 0,
       name: json['name'] as String,
       description: json['description'] as String?,
       imageUrl: json['imageUrl'] as String?,
