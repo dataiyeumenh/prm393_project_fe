@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../models/api/order_dto.dart';
 import '../../../services/order_service.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/formatters.dart';
 import '../admin_shell.dart';
 
 class AdminOrderDetailScreen extends StatefulWidget {
@@ -52,7 +53,7 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
           content: Text(
-            'Order updated to ${newStatus.label}',
+            'Đã cập nhật đơn sang ${newStatus.viLabel}',
             style: AppTypography.captionMd.copyWith(color: AppColors.onPrimary),
           ),
         ),
@@ -64,7 +65,7 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
           backgroundColor: AppColors.sale,
           behavior: SnackBarBehavior.floating,
           content: Text(
-            result.error ?? 'Failed to update status',
+            result.error ?? 'Cập nhật trạng thái thất bại',
             style: AppTypography.captionMd.copyWith(color: AppColors.onPrimary),
           ),
         ),
@@ -78,7 +79,7 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
       backgroundColor: AppColors.canvas,
       appBar: AppBar(
         title: Text(
-          _order?.orderCode ?? 'Order Detail',
+          _order?.orderCode ?? 'Chi tiết đơn hàng',
           style: AppTypography.headingMd,
         ),
         leading: const BackButton(),
@@ -114,8 +115,7 @@ class _OrderBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currFmt = NumberFormat.currency(symbol: '\$', decimalDigits: 2);
-    final dateFmt = DateFormat('MMM d, yyyy · HH:mm');
+    final dateFmt = DateFormat('dd/MM/yyyy · HH:mm');
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -126,7 +126,7 @@ class _OrderBody extends StatelessWidget {
           Row(
             children: [
               StatusChip(
-                label: order.status.label,
+                label: order.status.viLabel,
                 color: order.status.color,
                 bgColor: order.status.bgColor,
               ),
@@ -141,11 +141,11 @@ class _OrderBody extends StatelessWidget {
 
           // Customer info
           _Section(
-            title: 'Customer',
+            title: 'Khách hàng',
             child: _InfoGrid(
               items: [
                 _InfoItem(
-                  label: 'Name',
+                  label: 'Họ tên',
                   value: order.customerName,
                   icon: Icons.person_outline,
                 ),
@@ -156,13 +156,13 @@ class _OrderBody extends StatelessWidget {
                 ),
                 if (order.customerPhone != null)
                   _InfoItem(
-                    label: 'Phone',
+                    label: 'Số điện thoại',
                     value: order.customerPhone!,
                     icon: Icons.phone_outlined,
                   ),
                 if (order.shippingAddress != null)
                   _InfoItem(
-                    label: 'Address',
+                    label: 'Địa chỉ',
                     value: order.shippingAddress!,
                     icon: Icons.location_on_outlined,
                   ),
@@ -173,7 +173,7 @@ class _OrderBody extends StatelessWidget {
 
           // Items
           _Section(
-            title: 'Items (${order.items.length})',
+            title: 'Sản phẩm (${order.items.length})',
             child: Column(
               children: order.items
                   .map((item) => _OrderItemRow(item: item))
@@ -184,26 +184,26 @@ class _OrderBody extends StatelessWidget {
 
           // Totals
           _Section(
-            title: 'Payment',
+            title: 'Thanh toán',
             child: Column(
               children: [
                 _TotalRow(
-                  label: 'Subtotal',
-                  value: currFmt.format(
+                  label: 'Tạm tính',
+                  value: Formatters.vnd(
                     order.totalAmount - (order.shippingFee ?? 0),
                   ),
                 ),
                 if (order.shippingFee != null)
                   _TotalRow(
-                    label: 'Shipping',
+                    label: 'Vận chuyển',
                     value: order.shippingFee == 0
-                        ? 'Free'
-                        : currFmt.format(order.shippingFee!),
+                        ? 'Miễn phí'
+                        : Formatters.vnd(order.shippingFee!),
                   ),
                 const Divider(height: 16),
                 _TotalRow(
-                  label: 'Total',
-                  value: currFmt.format(order.totalAmount),
+                  label: 'Tổng cộng',
+                  value: Formatters.vnd(order.totalAmount),
                   bold: true,
                 ),
               ],
@@ -214,7 +214,7 @@ class _OrderBody extends StatelessWidget {
           // Status actions
           if (order.status.nextStatuses.isNotEmpty) ...[
             Text(
-              'Update Status',
+              'Cập nhật trạng thái',
               style: AppTypography.headingMd.copyWith(
                 color: AppColors.charcoal,
               ),
@@ -330,7 +330,6 @@ class _OrderItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currFmt = NumberFormat.currency(symbol: '\$', decimalDigits: 2);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -367,7 +366,7 @@ class _OrderItemRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  'x${item.quantity}  ·  ${currFmt.format(item.unitPrice)} each',
+                  'x${item.quantity}  ·  ${Formatters.vnd(item.unitPrice)}/sp',
                   style: AppTypography.utilityXs.copyWith(
                     color: AppColors.mute,
                   ),
@@ -376,7 +375,7 @@ class _OrderItemRow extends StatelessWidget {
             ),
           ),
           Text(
-            currFmt.format(item.subTotal),
+            Formatters.vnd(item.subTotal),
             style: AppTypography.captionMd.copyWith(
               color: AppColors.ink,
               fontWeight: FontWeight.w700,
@@ -442,7 +441,7 @@ class _StatusActionButton extends StatelessWidget {
           border: Border.all(color: status.color.withValues(alpha: 0.4)),
         ),
         child: Text(
-          'Mark as ${status.label}',
+          'Đánh dấu: ${status.viLabel}',
           style: AppTypography.buttonSm.copyWith(
             color: status.color,
             fontWeight: FontWeight.w700,
@@ -474,7 +473,7 @@ class _ErrorBody extends StatelessWidget {
               style: AppTypography.bodyMd.copyWith(color: AppColors.mute),
             ),
             const SizedBox(height: 16),
-            OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
+            OutlinedButton(onPressed: onRetry, child: const Text('Thử lại')),
           ],
         ),
       ),

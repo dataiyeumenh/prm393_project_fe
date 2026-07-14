@@ -50,7 +50,7 @@ class _AddressFormSheetState extends State<AddressFormSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppColors.ink,
-          content: Text(result.error ?? 'Failed to add address',
+          content: Text(result.error ?? 'Thêm địa chỉ thất bại',
               style: AppTypography.bodyMd.copyWith(color: AppColors.onPrimary)),
           behavior: SnackBarBehavior.floating,
         ),
@@ -89,41 +89,41 @@ class _AddressFormSheetState extends State<AddressFormSheet> {
                 ),
               ),
               const SizedBox(height: 18),
-              Text('New address', style: AppTypography.headingMd),
+              Text('Địa chỉ mới', style: AppTypography.headingMd),
               const SizedBox(height: 16),
               _Field(
                 controller: _name,
-                label: 'Receiver name',
+                label: 'Tên người nhận',
                 textInputAction: TextInputAction.next,
                 validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Required' : null,
+                    (v == null || v.trim().isEmpty) ? 'Vui lòng nhập tên' : null,
               ),
               const SizedBox(height: 12),
               _Field(
                 controller: _phone,
-                label: 'Phone number',
+                label: 'Số điện thoại',
                 keyboardType: TextInputType.phone,
                 textInputAction: TextInputAction.next,
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Required';
-                  if (v.trim().length < 8) return 'Enter a valid phone number';
+                  if (v == null || v.trim().isEmpty) return 'Vui lòng nhập số điện thoại';
+                  if (v.trim().length < 8) return 'Số điện thoại chưa hợp lệ';
                   return null;
                 },
               ),
               const SizedBox(height: 12),
               _Field(
                 controller: _street,
-                label: 'Street address',
+                label: 'Địa chỉ cụ thể',
                 maxLines: 2,
                 validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Required' : null,
+                    (v == null || v.trim().isEmpty) ? 'Vui lòng nhập địa chỉ' : null,
               ),
               const SizedBox(height: 8),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 value: _isDefault,
                 activeThumbColor: AppColors.accentPinkDeep,
-                title: Text('Set as default address',
+                title: Text('Đặt làm địa chỉ mặc định',
                     style: AppTypography.bodyMd),
                 onChanged: (v) => setState(() => _isDefault = v),
               ),
@@ -151,7 +151,7 @@ class _AddressFormSheetState extends State<AddressFormSheet> {
                                       AppColors.onPrimary),
                                 ),
                               )
-                            : Text('Save address',
+                            : Text('Lưu địa chỉ',
                                 style: AppTypography.buttonMd
                                     .copyWith(color: AppColors.onPrimary)),
                       ),

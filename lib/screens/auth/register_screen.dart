@@ -38,7 +38,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (!_agree) {
-      setState(() => _error = 'Please agree to the Terms to continue.');
+      setState(() => _error = 'Vui lòng đồng ý điều khoản để tiếp tục.');
       return;
     }
     setState(() {
@@ -89,17 +89,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   const SizedBox(height: 16),
                   const GradientHeadline(
-                    'Join the\npack.',
+                    'Lập hội\ncùng đàn.',
                     fontSize: 80,
                     height: 0.9,
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Create an account to unlock member-only pricing and faster checkout.',
+                    'Tạo tài khoản để hưởng giá thành viên và thanh toán nhanh hơn.',
                     style: AppTypography.bodyMd.copyWith(color: AppColors.mute),
                   ),
                   const SizedBox(height: 36),
-                  Text('Full Name', style: AppTypography.captionMd),
+                  Text('Họ và tên', style: AppTypography.captionMd),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _nameCtrl,
@@ -107,13 +107,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: AppTypography.bodyMd.copyWith(color: AppColors.ink),
                     cursorColor: AppColors.ink,
                     decoration: InputDecoration(
-                      hintText: 'Jane Doe',
+                      hintText: 'Nguyễn Văn A',
                       hintStyle: AppTypography.bodyMd.copyWith(
                         color: AppColors.stone,
                       ),
                     ),
                     validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Required' : null,
+                        (v == null || v.trim().isEmpty) ? 'Vui lòng nhập họ tên' : null,
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   Text('Email', style: AppTypography.captionMd),
@@ -125,19 +125,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: AppTypography.bodyMd.copyWith(color: AppColors.ink),
                     cursorColor: AppColors.ink,
                     decoration: InputDecoration(
-                      hintText: 'you@petlovers.com',
+                      hintText: 'ban@petlovers.com',
                       hintStyle: AppTypography.bodyMd.copyWith(
                         color: AppColors.stone,
                       ),
                     ),
                     validator: (v) {
-                      if (v == null || v.isEmpty) return 'Required';
-                      if (!v.contains('@')) return 'Invalid email';
+                      if (v == null || v.isEmpty) return 'Vui lòng nhập email';
+                      if (!v.contains('@')) return 'Email chưa hợp lệ';
                       return null;
                     },
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text('Password', style: AppTypography.captionMd),
+                  Text('Mật khẩu', style: AppTypography.captionMd),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _passwordCtrl,
@@ -145,7 +145,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: AppTypography.bodyMd.copyWith(color: AppColors.ink),
                     cursorColor: AppColors.ink,
                     decoration: InputDecoration(
-                      hintText: 'At least 6 characters',
+                      hintText: 'Tối thiểu 6 ký tự',
                       hintStyle: AppTypography.bodyMd.copyWith(
                         color: AppColors.stone,
                       ),
@@ -158,13 +158,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     validator: (v) {
-                      if (v == null || v.isEmpty) return 'Required';
-                      if (v.length < 6) return 'At least 6 characters';
+                      if (v == null || v.isEmpty) return 'Vui lòng nhập mật khẩu';
+                      if (v.length < 6) return 'Mật khẩu tối thiểu 6 ký tự';
                       return null;
                     },
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text('Confirm Password', style: AppTypography.captionMd),
+                  Text('Nhập lại mật khẩu', style: AppTypography.captionMd),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _confirmCtrl,
@@ -172,7 +172,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: AppTypography.bodyMd.copyWith(color: AppColors.ink),
                     cursorColor: AppColors.ink,
                     decoration: InputDecoration(
-                      hintText: 'Re-enter your password',
+                      hintText: 'Nhập lại mật khẩu',
                       hintStyle: AppTypography.bodyMd.copyWith(
                         color: AppColors.stone,
                       ),
@@ -185,7 +185,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     validator: (v) =>
-                        (v == null || v.isEmpty) ? 'Required' : null,
+                        (v == null || v.isEmpty) ? 'Vui lòng nhập lại mật khẩu' : null,
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   Row(
@@ -206,7 +206,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'I agree to the Terms of Service and Privacy Policy.',
+                          'Tôi đồng ý với Điều khoản dịch vụ và Chính sách bảo mật.',
                           style: AppTypography.captionMd.copyWith(
                             color: AppColors.charcoal,
                           ),
@@ -225,7 +225,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ],
                   const SizedBox(height: AppSpacing.xl),
                   PrimaryButton(
-                    label: _loading ? 'Creating account...' : 'Join Us',
+                    label: _loading ? 'Đang tạo tài khoản...' : 'Đăng ký',
                     expand: true,
                     onPressed: _loading ? null : _submit,
                   ),
@@ -234,7 +234,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Already a member? ',
+                        'Đã có tài khoản? ',
                         style: AppTypography.bodyMd.copyWith(
                           color: AppColors.mute,
                         ),
@@ -242,7 +242,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       GestureDetector(
                         onTap: () => Navigator.of(context).pop(),
                         child: Text(
-                          'Sign In',
+                          'Đăng nhập',
                           style: AppTypography.linkMd.copyWith(
                             color: AppColors.ink,
                           ),

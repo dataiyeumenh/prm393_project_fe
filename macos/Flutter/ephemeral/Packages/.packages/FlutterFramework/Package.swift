@@ -1,29 +1,25 @@
 // swift-tools-version: 5.9
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 //
-<<<<<<< HEAD
-// Generated file. Do not edit.
-=======
 //  Generated file. Do not edit.
->>>>>>> main
 //
 
 import PackageDescription
 
 let package = Package(
-    name: "FlutterGeneratedPluginSwiftPackage",
+    name: "FlutterFramework",
     platforms: [
-        .iOS("13.0")
+        .macOS("10.15")
     ],
     products: [
-        .library(name: "FlutterGeneratedPluginSwiftPackage", type: .static, targets: ["FlutterGeneratedPluginSwiftPackage"])
+        .library(name: "FlutterFramework", targets: ["FlutterFramework"])
     ],
     dependencies: [
         
     ],
     targets: [
         .target(
-            name: "FlutterGeneratedPluginSwiftPackage"
+            name: "FlutterFramework"
         )
     ]
 )

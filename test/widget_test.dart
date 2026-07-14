@@ -7,7 +7,7 @@ void main() {
     await tester.pumpWidget(PawFuelApp(cartState: CartState()));
     await tester.pump(const Duration(milliseconds: 100));
 
-    expect(find.text('Welcome\nback.'), findsOneWidget);
-    expect(find.text('Sign In'), findsOneWidget);
+    expect(find.text('Chào mừng\ntrở lại.'), findsOneWidget);
+    expect(find.text('Đăng nhập'), findsOneWidget);
   });
 }

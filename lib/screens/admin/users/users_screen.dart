@@ -88,7 +88,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      appBar: AdminAppBar(subtitle: 'Admin Panel', title: 'Users'),
+      appBar: AdminAppBar(subtitle: 'Trang quản trị', title: 'Khách hàng'),
       body: Column(
         children: [
           // Search bar
@@ -100,7 +100,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               textInputAction: TextInputAction.search,
               style: AppTypography.bodyMd.copyWith(color: AppColors.ink),
               decoration: InputDecoration(
-                hintText: 'Search users…',
+                hintText: 'Tìm khách hàng…',
                 prefixIcon: const Icon(Icons.search, color: AppColors.mute),
                 suffixIcon: _search.isNotEmpty
                     ? IconButton(
@@ -123,7 +123,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               child: Row(
                 children: [
                   Text(
-                    '${_users.length} user${_users.length == 1 ? '' : 's'}${_hasMore ? '+' : ''}',
+                    'Hiển thị ${_users.length} người${_hasMore ? '+' : ''}',
                     style: AppTypography.captionSm.copyWith(
                       color: AppColors.mute,
                     ),
@@ -200,7 +200,7 @@ class _UserCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateFmt = DateFormat('MMM d, yyyy');
+    final dateFmt = DateFormat('dd/MM/yyyy');
     final avatarColor = _avatarColor(user.id);
 
     return Container(
@@ -267,7 +267,7 @@ class _UserCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppRadius.full),
                       ),
                       child: Text(
-                        user.isAdmin ? 'Admin' : 'User',
+                        user.isAdmin ? 'Quản trị' : 'Khách',
                         style: AppTypography.utilityXs.copyWith(
                           color: user.isAdmin
                               ? AppColors.accentPinkDeep
@@ -312,7 +312,7 @@ class _UserCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 3),
                       Text(
-                        'Joined ${dateFmt.format(user.createdAt!)}',
+                        'Tham gia ${dateFmt.format(user.createdAt!)}',
                         style: AppTypography.utilityXs.copyWith(
                           color: AppColors.stone,
                         ),
@@ -356,7 +356,7 @@ class _EmptyUsers extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'No users found',
+              'Chưa tìm thấy khách hàng',
               style: AppTypography.headingMd.copyWith(color: AppColors.ash),
             ),
           ],
@@ -391,9 +391,9 @@ class _UsersError extends StatelessWidget {
         : Icons.error_outline_rounded;
 
     final hint = _isAccessDenied
-        ? 'Your account may not have admin privileges for this endpoint.'
+        ? 'Tài khoản của bạn có thể chưa có quyền truy cập endpoint này.'
         : _isEndpointMissing
-        ? 'The users endpoint is not yet available on this backend.'
+        ? 'Endpoint khách hàng chưa sẵn trên backend.'
         : null;
 
     return Center(
@@ -418,7 +418,7 @@ class _UsersError extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 16),
-            OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
+            OutlinedButton(onPressed: onRetry, child: const Text('Thử lại')),
           ],
         ),
       ),

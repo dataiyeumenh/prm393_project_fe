@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'screens/admin/admin_shell.dart';
 import 'screens/auth/login_screen.dart';
-import 'screens/home/home_screen.dart';
+import 'screens/user/user_shell.dart';
 import 'services/api_service.dart';
 import 'state/auth_state.dart';
 import 'state/cart_state.dart';
@@ -53,6 +53,6 @@ class _AuthGate extends StatelessWidget {
     if (auth.isAdmin) {
       return const AdminShell(key: ValueKey('admin'));
     }
-    return const HomeScreen(key: ValueKey('home'));
+    return const UserShell(key: ValueKey('user'));
   }
 }

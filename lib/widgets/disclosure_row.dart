@@ -24,6 +24,7 @@ class _DisclosureRowState extends State<DisclosureRow> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         InkWell(
           onTap: () => setState(() => _open = !_open),
@@ -57,7 +58,13 @@ class _DisclosureRowState extends State<DisclosureRow> {
           firstChild: const SizedBox.shrink(),
           secondChild: Padding(
             padding: const EdgeInsets.only(bottom: 18),
-            child: widget.child,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SizedBox(
+                width: double.infinity,
+                child: widget.child,
+              ),
+            ),
           ),
         ),
         const Divider(height: 1, color: AppColors.hairline),

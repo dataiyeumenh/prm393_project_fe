@@ -27,6 +27,23 @@ extension OrderStatusX on OrderStatus {
     }
   }
 
+  String get viLabel {
+    switch (this) {
+      case OrderStatus.pending:
+        return 'Chờ thanh toán';
+      case OrderStatus.confirmed:
+        return 'Đã xác nhận';
+      case OrderStatus.processing:
+        return 'Đang xử lý';
+      case OrderStatus.shipped:
+        return 'Đang giao';
+      case OrderStatus.delivered:
+        return 'Đã giao';
+      case OrderStatus.cancelled:
+        return 'Đã huỷ';
+    }
+  }
+
   String get apiValue {
     return name.toUpperCase();
   }

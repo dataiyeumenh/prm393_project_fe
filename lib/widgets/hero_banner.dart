@@ -22,28 +22,28 @@ class _HeroBannerState extends State<HeroBanner> {
 
   static const List<_Slide> _slides = [
     _Slide(
-      kicker: 'NEW THIS WEEK',
-      title: 'Made\nwith love',
-      body: 'Real ingredients for happier pups.',
-      cta: 'Shop Bestsellers',
+      kicker: 'MỚI TUẦN NÀY',
+      title: 'Làm\nvới yêu\nthương',
+      body: 'Nguyên liệu thật cho boss khỏe mỗi ngày.',
+      cta: 'Mua sản phẩm hot',
       image:
           'https://images.unsplash.com/photo-1583511655826-05700d52f4d9?w=900',
       gradient: [AppColors.gradientStart, AppColors.accentPinkDeep],
     ),
     _Slide(
-      kicker: 'SPRING COLLECTION',
-      title: 'Meow\nmode on',
-      body: 'Wet food & treats your cat will adore.',
-      cta: 'Discover Cat',
+      kicker: 'BST MÙA XUÂN',
+      title: 'Mèo\nlên đồ',
+      body: 'Pate & snack khiến boss mèo mê tít.',
+      cta: 'Khám phá mèo',
       image:
           'https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=900',
       gradient: [AppColors.gradientMid, AppColors.fishAccent],
     ),
     _Slide(
-      kicker: 'FEATHERED FRIENDS',
-      title: 'Tiny\npets,\nbig joy',
-      body: 'Bird, fish & small-pet essentials.',
-      cta: 'Explore All',
+      kicker: 'BẠN CÓ CÁNH',
+      title: 'Boss\nnhỏ,\nniềm vui lớn',
+      body: 'Đồ dùng cho chim, cá và thú nhỏ.',
+      cta: 'Xem tất cả',
       image:
           'https://images.unsplash.com/photo-1522858547137-f1dcec554f55?w=900',
       gradient: [AppColors.gradientEnd, AppColors.accentTeal],

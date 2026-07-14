@@ -68,7 +68,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'OTP has been sent to ${widget.email}',
+            'Đã gửi mã OTP đến ${widget.email}',
             style: AppTypography.captionMd.copyWith(color: AppColors.onPrimary),
           ),
           backgroundColor: AppColors.success,
@@ -132,17 +132,17 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                 children: [
                   const SizedBox(height: 24),
                   const GradientHeadline(
-                    'Verify\nyour code.',
+                    'Xác minh\nmã của bạn.',
                     fontSize: 72,
                     height: 0.9,
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'We sent an OTP to ${widget.email}. Enter the code to activate your account.',
+                    'Chúng tôi đã gửi mã OTP đến ${widget.email}. Nhập mã để kích hoạt tài khoản nhé.',
                     style: AppTypography.bodyMd.copyWith(color: AppColors.mute),
                   ),
                   const SizedBox(height: 32),
-                  Text('OTP Code', style: AppTypography.captionMd),
+                  Text('Mã OTP', style: AppTypography.captionMd),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _otpCtrl,
@@ -151,15 +151,15 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                     style: AppTypography.bodyMd.copyWith(color: AppColors.ink),
                     cursorColor: AppColors.ink,
                     decoration: InputDecoration(
-                      hintText: 'Enter OTP code',
+                      hintText: 'Nhập mã OTP',
                       hintStyle: AppTypography.bodyMd.copyWith(
                         color: AppColors.stone,
                       ),
                     ),
                     validator: (v) {
                       final code = v?.trim() ?? '';
-                      if (code.isEmpty) return 'Required';
-                      if (code.length < 4) return 'OTP is too short';
+                      if (code.isEmpty) return 'Vui lòng nhập mã';
+                      if (code.length < 4) return 'Mã OTP quá ngắn';
                       return null;
                     },
                     onFieldSubmitted: (_) => _loading ? null : _submit(),
@@ -175,7 +175,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                   ],
                   const SizedBox(height: AppSpacing.xl),
                   PrimaryButton(
-                    label: _loading ? 'Verifying...' : 'Verify OTP',
+                    label: _loading ? 'Đang xác minh...' : 'Xác minh OTP',
                     expand: true,
                     onPressed: _loading ? null : _submit,
                   ),
@@ -186,10 +186,10 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                         : _resendOtp,
                     child: Text(
                       _resending
-                          ? 'Sending OTP...'
+                          ? 'Đang gửi OTP...'
                           : _cooldown > 0
-                          ? 'Resend OTP in ${_cooldown}s'
-                          : 'Send OTP to email again',
+                          ? 'Gửi lại OTP sau ${_cooldown}s'
+                          : 'Gửi lại OTP qua email',
                       style: AppTypography.buttonSm.copyWith(
                         color: AppColors.ink,
                         decoration: TextDecoration.underline,
@@ -203,7 +203,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                         : () =>
                               Navigator.of(context).popUntil((r) => r.isFirst),
                     child: Text(
-                      'Back to Sign In',
+                      'Quay lại đăng nhập',
                       style: AppTypography.buttonSm.copyWith(
                         color: AppColors.ink,
                         decoration: TextDecoration.underline,

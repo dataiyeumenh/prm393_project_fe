@@ -74,13 +74,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 48),
                   const GradientHeadline(
-                    'Welcome\nback.',
+                    'Chào mừng\ntrở lại.',
                     fontSize: 80,
                     height: 0.9,
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Sign in to fuel your pet\'s happiest life.',
+                    'Đăng nhập để chăm boss thật tốt mỗi ngày.',
                     style: AppTypography.bodyMd.copyWith(color: AppColors.mute),
                   ),
                   const SizedBox(height: 36),
@@ -93,17 +93,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: AppTypography.bodyMd.copyWith(color: AppColors.ink),
                     cursorColor: AppColors.ink,
                     decoration: InputDecoration(
-                      hintText: 'you@petlovers.com',
+                      hintText: 'ban@petlovers.com',
                       hintStyle: AppTypography.bodyMd.copyWith(color: AppColors.stone),
                     ),
                     validator: (v) {
-                      if (v == null || v.isEmpty) return 'Required';
-                      if (!v.contains('@')) return 'Invalid email';
+                      if (v == null || v.isEmpty) return 'Vui lòng nhập email';
+                      if (!v.contains('@')) return 'Email chưa hợp lệ';
                       return null;
                     },
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text('Password', style: AppTypography.captionMd),
+                  Text('Mật khẩu', style: AppTypography.captionMd),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _passwordCtrl,
@@ -122,8 +122,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     validator: (v) {
-                      if (v == null || v.isEmpty) return 'Required';
-                      if (v.length < 6) return 'At least 6 characters';
+                      if (v == null || v.isEmpty) return 'Vui lòng nhập mật khẩu';
+                      if (v.length < 6) return 'Mật khẩu tối thiểu 6 ký tự';
                       return null;
                     },
                   ),
@@ -133,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: TextButton(
                       onPressed: () {},
                       child: Text(
-                        'Forgot password?',
+                        'Quên mật khẩu?',
                         style: AppTypography.buttonSm.copyWith(
                           color: AppColors.ink,
                           decoration: TextDecoration.underline,
@@ -150,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                   const SizedBox(height: AppSpacing.xl),
                   PrimaryButton(
-                    label: _loading ? 'Signing in...' : 'Sign In',
+                    label: _loading ? 'Đang đăng nhập...' : 'Đăng nhập',
                     expand: true,
                     onPressed: _loading ? null : _submit,
                   ),
@@ -159,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "New to PawFuel? ",
+                        "Mới dùng PawFuel? ",
                         style: AppTypography.bodyMd.copyWith(color: AppColors.mute),
                       ),
                       GestureDetector(
@@ -171,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           );
                         },
                         child: Text(
-                          'Join Us',
+                          'Tạo tài khoản',
                           style: AppTypography.linkMd.copyWith(color: AppColors.ink),
                         ),
                       ),

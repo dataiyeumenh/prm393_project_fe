@@ -189,4 +189,17 @@ extension StockLevelX on StockLevel {
         return 'Good';
     }
   }
+
+  String get viLabel {
+    switch (this) {
+      case StockLevel.outOfStock:
+        return 'Hết hàng';
+      case StockLevel.low:
+        return 'Sắp hết';
+      case StockLevel.medium:
+        return 'Vừa đủ';
+      case StockLevel.good:
+        return 'Nhiều';
+    }
+  }
 }
