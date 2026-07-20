@@ -1,6 +1,7 @@
 // This is a generated file; do not edit or check into version control.
-FLUTTER_ROOT=D:\PRM393\flutter
-FLUTTER_APPLICATION_PATH=D:\PRM393\Project-PRM\prm393_project_fe
+FLUTTER_ROOT=D:\flutter
+FLUTTER_APPLICATION_PATH=E:\Workspace\FPTU\SU26\PRM393\prm393_project\prm393_project_fe
+FLUTTER_FRAMEWORK_SWIFT_PACKAGE_PATH=E:\Workspace\FPTU\SU26\PRM393\prm393_project\prm393_project_fe\macos\Flutter\ephemeral\Packages\.packages\FlutterFramework
 COCOAPODS_PARALLEL_CODE_SIGN=true
 FLUTTER_BUILD_DIR=build
 FLUTTER_BUILD_NAME=1.0.0

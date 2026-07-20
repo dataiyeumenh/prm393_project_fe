@@ -5,13 +5,64 @@ import 'api_service.dart';
 import 'product_service.dart';
 
 class OrderService {
-  /// Pushes the locally-held cart lines up to the server cart so that
-  /// `POST /orders/checkout` (which reads the server-side cart) reflects
-  /// exactly what the user sees. The cart endpoint upserts by productId,
-  /// so sending each line once with its final quantity is idempotent.
+  /// Reconciles local cart with server cart so checkout reads the same items
+  /// the user currently sees in-app.
   static Future<ApiResult<void>> syncCart(List<CartItemRequest> items) async {
     try {
+      final currentCartResp = await ApiService.dio.get('/api/v1/cart');
+      if (currentCartResp.statusCode != 200) {
+        return ApiResult.fail(
+          currentCartResp.data['message'] as String? ??
+              'Failed to load server cart',
+        );
+      }
+
+      final currentData = currentCartResp.data['data'] as Map<String, dynamic>?;
+      final currentItemsRaw = currentData?['items'] as List<dynamic>? ?? [];
+      final currentItems = currentItemsRaw
+          .whereType<Map<String, dynamic>>()
+          .map(CartItemDTO.fromJson)
+          .toList();
+
+      final targetByProductId = <String, CartItemRequest>{
+        for (final item in items) item.productId: item,
+      };
+      final currentByProductId = <String, CartItemDTO>{
+        for (final item in currentItems) item.productId: item,
+      };
+
+      // Remove products that are no longer present in local cart.
+      for (final serverItem in currentItems) {
+        if (!targetByProductId.containsKey(serverItem.productId)) {
+          final removeResp = await ApiService.dio.delete(
+            '/api/v1/cart/${serverItem.id}',
+          );
+          if (removeResp.statusCode != 200 && removeResp.statusCode != 204) {
+            return ApiResult.fail(
+              removeResp.data['message'] as String? ??
+                  'Failed to remove stale server cart item',
+            );
+          }
+        }
+      }
+
+      // Ensure each local line exists on server with the same quantity.
       for (final item in items) {
+        final existing = currentByProductId[item.productId];
+        if (existing != null) {
+          if (existing.quantity == item.quantity) continue;
+
+          final removeResp = await ApiService.dio.delete(
+            '/api/v1/cart/${existing.id}',
+          );
+          if (removeResp.statusCode != 200 && removeResp.statusCode != 204) {
+            return ApiResult.fail(
+              removeResp.data['message'] as String? ??
+                  'Failed to refresh cart quantity',
+            );
+          }
+        }
+
         final response = await ApiService.dio.post(
           '/api/v1/cart',
           data: item.toJson(),

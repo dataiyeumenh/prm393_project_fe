@@ -121,6 +121,25 @@ class AuthState extends ChangeNotifier {
     _user = null;
     notifyListeners();
   }
+
+  void updateProfile({
+    required String fullName,
+    String? phone,
+    String? address,
+    String? avatarUrl,
+  }) {
+    if (_user == null) return;
+    _user = AppUser(
+      id: _user!.id,
+      email: _user!.email,
+      fullName: fullName,
+      phone: phone,
+      address: address,
+      avatarUrl: avatarUrl ?? _user!.avatarUrl,
+      role: _user!.role,
+    );
+    notifyListeners();
+  }
 }
 
 class AuthException implements Exception {

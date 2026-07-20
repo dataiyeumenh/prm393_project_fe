@@ -6,7 +6,6 @@ import '../../models/api/product_dto.dart';
 import '../../services/category_service.dart';
 import '../../services/product_service.dart';
 import '../../state/auth_state.dart';
-import '../../state/cart_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/category_icon_card.dart';
 import '../../widgets/app_background.dart';
@@ -15,7 +14,7 @@ import '../../widgets/primary_nav_bar.dart';
 import '../../widgets/promo_badge.dart';
 import '../../widgets/scroll_to_top_fab.dart';
 import '../../utils/formatters.dart';
-import '../cart/cart_screen.dart';
+import '../chat/chatbot_screen.dart';
 import '../product/all_products_screen.dart';
 import '../product/product_detail_screen.dart';
 
@@ -87,7 +86,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthState>().user;
-    final cart = context.watch<CartState>();
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
@@ -365,8 +363,7 @@ class _HomeScreenState extends State<HomeScreen> {
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeOut,
         ),
-        cartCount: cart.itemCount,
-        onCart: () => _push(context, const CartScreen()),
+        onChatbot: () => _push(context, const ChatbotScreen()),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
@@ -707,13 +704,11 @@ class _HomeFabStack extends StatelessWidget {
   const _HomeFabStack({
     required this.showScrollTop,
     required this.onScrollTop,
-    required this.cartCount,
-    required this.onCart,
+    required this.onChatbot,
   });
   final bool showScrollTop;
   final VoidCallback onScrollTop;
-  final int cartCount;
-  final VoidCallback onCart;
+  final VoidCallback onChatbot;
 
   @override
   Widget build(BuildContext context) {
@@ -723,15 +718,14 @@ class _HomeFabStack extends StatelessWidget {
       children: [
         ScrollToTopFab(visible: showScrollTop, onTap: onScrollTop),
         const SizedBox(height: 12),
-        CartFabWithBadge(count: cartCount, onTap: onCart),
+        ChatbotFab(onTap: onChatbot),
       ],
     );
   }
 }
 
-class CartFabWithBadge extends StatelessWidget {
-  const CartFabWithBadge({super.key, required this.count, required this.onTap});
-  final int count;
+class ChatbotFab extends StatelessWidget {
+  const ChatbotFab({super.key, required this.onTap});
   final VoidCallback onTap;
 
   @override
@@ -763,35 +757,10 @@ class CartFabWithBadge extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               const Icon(
-                Icons.shopping_bag,
+                Icons.smart_toy_outlined,
                 color: AppColors.onPrimary,
                 size: 24,
               ),
-              if (count > 0)
-                Positioned(
-                  top: 6,
-                  right: 6,
-                  child: Container(
-                    constraints: const BoxConstraints(
-                      minWidth: 18,
-                      minHeight: 18,
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 5),
-                    decoration: BoxDecoration(
-                      color: AppColors.canvas,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.accentPink, width: 2),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      count > 9 ? '9+' : '$count',
-                      style: AppTypography.utilityXs.copyWith(
-                        color: AppColors.accentPinkDeep,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
             ],
           ),
         ),

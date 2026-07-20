@@ -112,6 +112,26 @@ class AdminService {
     );
   }
 
+  /// Toggle user lock status (active/inactive) via admin endpoint.
+  static Future<ApiResult<bool>> toggleUserLock(String userId) async {
+    try {
+      final response = await ApiService.dio.put(
+        '/api/v1/admin/users/$userId/lock',
+      );
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return ApiResult.success(true);
+      }
+      return ApiResult.fail(
+        response.data is Map<String, dynamic>
+            ? (response.data['message'] as String? ??
+                  'Failed to toggle account lock status')
+            : 'Failed to toggle account lock status',
+      );
+    } catch (e) {
+      return ApiResult.fail(_extractError(e));
+    }
+  }
+
   // ──────────────────────────────────────────────────────────────
   // Warehouse / Products
   // ──────────────────────────────────────────────────────────────
@@ -200,10 +220,11 @@ class AdminService {
   /// The server expects a form field named "product" containing a JSON string.
   static Future<ApiResult<bool>> updateProduct(
     String productId,
-    Map<String, dynamic> updates,
-  ) async {
+    Map<String, dynamic> updates, {
+    MultipartFile? image,
+  }) async {
     try {
-      if (updates.isEmpty) {
+      if (updates.isEmpty && image == null) {
         return ApiResult.fail('No fields to update');
       }
 
@@ -215,12 +236,16 @@ class AdminService {
 
       final payload = _normalizeProductPayload(sanitized);
 
-      if (payload.isEmpty) {
+      if (payload.isEmpty && image == null) {
         return ApiResult.fail('No valid fields to update');
       }
 
       // PUT multipart/form-data with product JSON string payload.
-      final formData = FormData.fromMap({'product': jsonEncode(payload)});
+      final formMap = <String, dynamic>{'product': jsonEncode(payload)};
+      if (image != null) {
+        formMap['image'] = image;
+      }
+      final formData = FormData.fromMap(formMap);
 
       final putResp = await ApiService.dio.put(
         '/api/v1/admin/products/$productId',

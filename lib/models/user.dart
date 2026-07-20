@@ -5,6 +5,7 @@ class AppUser {
     required this.fullName,
     this.phone,
     this.address,
+    this.avatarUrl,
     this.role = 'USER',
   });
 
@@ -13,6 +14,7 @@ class AppUser {
   final String fullName;
   final String? phone;
   final String? address;
+  final String? avatarUrl;
   final String role;
 
   // Handles both 'ADMIN' and 'ROLE_ADMIN' formats from backend

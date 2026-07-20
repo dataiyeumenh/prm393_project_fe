@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/api/category_dto.dart';
 import '../../models/api/product_dto.dart';
+import '../../services/category_service.dart';
 import '../../services/product_service.dart';
-import '../../state/cart_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/filter_chip_pill.dart';
 import '../../widgets/app_background.dart';
 import '../../widgets/scroll_to_top_fab.dart';
 import '../../utils/formatters.dart';
-import '../cart/cart_screen.dart';
+import '../chat/chatbot_screen.dart';
 import 'product_detail_screen.dart';
 
 class AllProductsScreen extends StatefulWidget {
-  const AllProductsScreen({super.key, this.initialCategoryId, this.categoryName});
+  const AllProductsScreen({
+    super.key,
+    this.initialCategoryId,
+    this.categoryName,
+  });
 
   final int? initialCategoryId;
   final String? categoryName;
@@ -64,10 +69,11 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
 
   final _searchCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
+  List<CategoryDTO> _categories = [];
   int? _selectedCategoryId;
   _SortOption _sort = _SortOption.featured;
   bool _showScrollTop = false;
-  
+
   List<ProductSummaryDTO> _products = [];
   bool _loading = true;
   bool _loadingMore = false;
@@ -80,7 +86,16 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
     super.initState();
     _selectedCategoryId = widget.initialCategoryId;
     _scrollCtrl.addListener(_onScroll);
+    _loadCategories();
     _loadProducts(reset: true);
+  }
+
+  Future<void> _loadCategories() async {
+    final result = await CategoryService.getAllCategories();
+    if (!mounted || !result.isSuccess || result.data == null) return;
+    setState(() {
+      _categories = result.data!;
+    });
   }
 
   void _onScroll() {
@@ -96,7 +111,7 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
 
   Future<void> _loadProducts({bool reset = false}) async {
     if (_loading && !reset) return;
-    
+
     setState(() {
       if (reset) {
         _loading = true;
@@ -173,15 +188,14 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
       isScrollControlled: true,
       backgroundColor: AppColors.canvas,
       shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
       builder: (_) => _FilterSheet(
+        categories: _categories,
         selectedCategoryId: _selectedCategoryId,
         onCategory: (id) {
           setState(() => _selectedCategoryId = id);
         },
-        onReset: _reset,
         onApply: () {
           Navigator.pop(context);
           _onFilterChange();
@@ -192,149 +206,154 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cartCount = context.watch<CartState>().itemCount;
-
     return Scaffold(
       backgroundColor: AppColors.canvas,
       body: AppBackground(
         child: NestedScrollView(
           controller: _scrollCtrl,
           headerSliverBuilder: (context, inner) => [
-          SliverAppBar(
-            pinned: true,
-            backgroundColor: AppColors.canvas,
-            elevation: 0,
-            scrolledUnderElevation: 0,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: AppColors.ink),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            title: Text(
-              widget.categoryName ?? 'Tất cả sản phẩm',
-              style: AppTypography.headingLg,
-            ),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.search, color: AppColors.ink),
-                onPressed: () {
-                  showSearch(
-                    context: context,
-                    delegate: _ProductSearchDelegate(
-                      onProductSelected: (product) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => ProductDetailScreen(productId: product.id),
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                },
+            SliverAppBar(
+              pinned: true,
+              backgroundColor: AppColors.canvas,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back, color: AppColors.ink),
+                onPressed: () => Navigator.of(context).pop(),
               ),
-              const SizedBox(width: 4),
-            ],
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(56),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _PillButton(
-                        icon: Icons.tune,
-                        label: 'Bộ lọc',
-                        active: _selectedCategoryId != null,
-                        onTap: _openFilters,
+              title: Text(
+                widget.categoryName ?? 'Tất cả sản phẩm',
+                style: AppTypography.headingLg,
+              ),
+              actions: [
+                IconButton(
+                  icon: Icon(Icons.search, color: AppColors.ink),
+                  onPressed: () {
+                    showSearch(
+                      context: context,
+                      delegate: _ProductSearchDelegate(
+                        onProductSelected: (product) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  ProductDetailScreen(productId: product.id),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _PillButton(
-                        icon: Icons.swap_vert,
-                        label: _sort.label,
-                        active: false,
-                        onTap: _pickSort,
+                    );
+                  },
+                ),
+                const SizedBox(width: 4),
+              ],
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(56),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _PillButton(
+                          icon: Icons.tune,
+                          label: 'Bộ lọc',
+                          active: _selectedCategoryId != null,
+                          onTap: _openFilters,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _PillButton(
+                          icon: Icons.swap_vert,
+                          label: _sort.label,
+                          active: false,
+                          onTap: _pickSort,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
-        body: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : _products.isEmpty
-                ? _EmptyState(onReset: _reset)
-                : Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                        child: Row(
-                          children: [
-                            Text(
-                              '$_totalElements sản phẩm',
-                              style: AppTypography.captionMd
-                                  .copyWith(color: AppColors.mute),
+          ],
+          body: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : _products.isEmpty
+              ? _EmptyState(onReset: _reset)
+              : Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                      child: Row(
+                        children: [
+                          Text(
+                            '$_totalElements sản phẩm',
+                            style: AppTypography.captionMd.copyWith(
+                              color: AppColors.mute,
                             ),
-                            const Spacer(),
-                            if (widget.categoryName != null)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.accentPinkSoft,
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.full),
-                                ),
-                                child: Text(
-                                  widget.categoryName!,
-                                  style: AppTypography.captionSm.copyWith(
-                                    color: AppColors.accentPinkDeep,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: GridView.builder(
-                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 18,
-                            childAspectRatio: 0.58,
                           ),
-                          itemCount: _products.length + (_hasMore ? 1 : 0),
-                          itemBuilder: (_, i) {
-                            if (i >= _products.length) {
-                              return const _LoadMoreTile();
-                            }
-                            final p = _products[i];
-                            return _ApiProductCard(
-                              product: p,
-                              onTap: () => Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => ProductDetailScreen(productId: p.id),
+                          const Spacer(),
+                          if (widget.categoryName != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.accentPinkSoft,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.full,
                                 ),
                               ),
-                            );
-                          },
-                        ),
+                              child: Text(
+                                widget.categoryName!,
+                                style: AppTypography.captionSm.copyWith(
+                                  color: AppColors.accentPinkDeep,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
-                      if (_hasMore)
-                        _PaginationFooter(
-                          shown: _products.length,
-                          total: _totalElements,
-                          hasMore: _hasMore,
-                          onLoadMore: _loadMore,
-                        ),
-                    ],
-                  ),
-      )),
+                    ),
+                    Expanded(
+                      child: GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 18,
+                              childAspectRatio: 0.58,
+                            ),
+                        itemCount: _products.length + (_hasMore ? 1 : 0),
+                        itemBuilder: (_, i) {
+                          if (i >= _products.length) {
+                            return const _LoadMoreTile();
+                          }
+                          final p = _products[i];
+                          return _ApiProductCard(
+                            product: p,
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    ProductDetailScreen(productId: p.id),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    if (_hasMore)
+                      _PaginationFooter(
+                        shown: _products.length,
+                        total: _totalElements,
+                        hasMore: _hasMore,
+                        onLoadMore: _loadMore,
+                      ),
+                  ],
+                ),
+        ),
+      ),
       floatingActionButton: _FabStack(
         showScrollTop: _showScrollTop,
         onScrollTop: () => _scrollCtrl.animateTo(
@@ -342,10 +361,9 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeOut,
         ),
-        cartCount: cartCount,
-        onCart: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const CartScreen()),
-        ),
+        onChatbot: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const ChatbotScreen())),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
@@ -356,8 +374,7 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
       context: context,
       backgroundColor: AppColors.canvas,
       shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
@@ -395,10 +412,7 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
 }
 
 class _ApiProductCard extends StatelessWidget {
-  const _ApiProductCard({
-    required this.product,
-    required this.onTap,
-  });
+  const _ApiProductCard({required this.product, required this.onTap});
 
   final ProductSummaryDTO product;
   final VoidCallback onTap;
@@ -446,7 +460,11 @@ class _ApiProductCard extends StatelessWidget {
                         ),
                       )
                     : const Center(
-                        child: Icon(Icons.image, color: AppColors.mute, size: 40),
+                        child: Icon(
+                          Icons.image,
+                          color: AppColors.mute,
+                          size: 40,
+                        ),
                       ),
               ),
             ),
@@ -609,13 +627,16 @@ class _PaginationFooter extends StatelessWidget {
               children: [
                 Text(
                   'Đang hiển thị $shown / $total',
-                  style: AppTypography.captionMd.copyWith(color: AppColors.mute),
+                  style: AppTypography.captionMd.copyWith(
+                    color: AppColors.mute,
+                  ),
                 ),
                 const Spacer(),
                 Text(
                   '${(percent * 100).round()}%',
-                  style: AppTypography.captionSm
-                      .copyWith(color: AppColors.accentPinkDeep),
+                  style: AppTypography.captionSm.copyWith(
+                    color: AppColors.accentPinkDeep,
+                  ),
                 ),
               ],
             ),
@@ -648,9 +669,7 @@ class _PaginationFooter extends StatelessWidget {
                       child: Text(
                         hasMore ? 'Tải thêm ↓' : 'Bạn đã xem hết 🎉',
                         style: AppTypography.buttonSm.copyWith(
-                          color: hasMore
-                              ? AppColors.onPrimary
-                              : AppColors.mute,
+                          color: hasMore ? AppColors.onPrimary : AppColors.mute,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -690,13 +709,11 @@ class _FabStack extends StatelessWidget {
   const _FabStack({
     required this.showScrollTop,
     required this.onScrollTop,
-    required this.cartCount,
-    required this.onCart,
+    required this.onChatbot,
   });
   final bool showScrollTop;
   final VoidCallback onScrollTop;
-  final int cartCount;
-  final VoidCallback onCart;
+  final VoidCallback onChatbot;
 
   @override
   Widget build(BuildContext context) {
@@ -706,54 +723,64 @@ class _FabStack extends StatelessWidget {
       children: [
         ScrollToTopFab(visible: showScrollTop, onTap: onScrollTop),
         const SizedBox(height: 12),
-        SizedBox(
+        _ChatbotFab(onTap: onChatbot),
+      ],
+    );
+  }
+}
+
+class _ChatbotFab extends StatelessWidget {
+  const _ChatbotFab({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.full),
+        onTap: onTap,
+        child: Container(
           width: 56,
           height: 56,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              const CartFab(),
-              if (cartCount > 0)
-                Positioned(
-                  top: -4,
-                  right: -4,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.canvas,
-                      borderRadius: BorderRadius.circular(99),
-                      border:
-                          Border.all(color: AppColors.accentPink, width: 2),
-                    ),
-                    child: Text(
-                      '$cartCount',
-                      style: AppTypography.utilityXs.copyWith(
-                        color: AppColors.accentPinkDeep,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.gradientStart, AppColors.accentPinkDeep],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            shape: BoxShape.circle,
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33000000),
+                blurRadius: 14,
+                offset: Offset(0, 6),
+              ),
             ],
           ),
+          child: const Icon(
+            Icons.smart_toy_outlined,
+            color: AppColors.onPrimary,
+            size: 24,
+          ),
         ),
-      ],
+      ),
     );
   }
 }
 
 class _FilterSheet extends StatefulWidget {
   const _FilterSheet({
+    required this.categories,
     required this.selectedCategoryId,
     required this.onCategory,
-    required this.onReset,
     required this.onApply,
   });
 
+  final List<CategoryDTO> categories;
   final int? selectedCategoryId;
   final ValueChanged<int?> onCategory;
-  final VoidCallback onReset;
   final VoidCallback onApply;
 
   @override
@@ -798,12 +825,12 @@ class _FilterSheetState extends State<_FilterSheet> {
                 TextButton(
                   onPressed: () {
                     setState(() => _tempCategoryId = null);
-                    widget.onReset();
                   },
                   child: Text(
                     'Đặt lại',
-                    style: AppTypography.buttonSm
-                        .copyWith(color: AppColors.sale),
+                    style: AppTypography.buttonSm.copyWith(
+                      color: AppColors.sale,
+                    ),
                   ),
                 ),
               ],
@@ -820,17 +847,17 @@ class _FilterSheetState extends State<_FilterSheet> {
                     onTap: () => setState(() => _tempCategoryId = null),
                   ),
                   const SizedBox(height: 8),
-                  ...['Thức ăn khô', 'Thức ăn ướt', 'Đồ ăn vặt', 'Cát mèo', 'Thức ăn chim', 'Thức ăn cá', 'Đồ chơi', 'Phụ kiện']
-                      .asMap()
-                      .entries
-                      .map((e) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: FilterChipPill(
-                              label: e.value,
-                              active: _tempCategoryId == e.key + 1,
-                              onTap: () => setState(() => _tempCategoryId = e.key + 1),
-                            ),
-                          )),
+                  ...widget.categories.map(
+                    (category) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: FilterChipPill(
+                        label: category.name,
+                        active: _tempCategoryId == category.id,
+                        onTap: () =>
+                            setState(() => _tempCategoryId = category.id),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -959,12 +986,15 @@ class _ProductSearchDelegate extends SearchDelegate<ProductSummaryDTO?> {
     _loading = true;
     final result = await ProductService.getProducts(page: 0, size: 20);
     _loading = false;
-    
+
     if (result.isSuccess && result.data != null) {
       _results = result.data!.content
-          .where((p) =>
-              p.name.toLowerCase().contains(query.toLowerCase()) ||
-              (p.brandName?.toLowerCase().contains(query.toLowerCase()) ?? false))
+          .where(
+            (p) =>
+                p.name.toLowerCase().contains(query.toLowerCase()) ||
+                (p.brandName?.toLowerCase().contains(query.toLowerCase()) ??
+                    false),
+          )
           .toList();
     }
     return _results;
@@ -1019,8 +1049,7 @@ class _EmptyState extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.full),
                 onTap: onReset,
                 child: const Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: 22, vertical: 12),
+                  padding: EdgeInsets.symmetric(horizontal: 22, vertical: 12),
                   child: Text(
                     'Đặt lại bộ lọc',
                     style: TextStyle(
