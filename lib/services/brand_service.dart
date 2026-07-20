@@ -58,7 +58,84 @@ class BrandService {
     );
   }
 
+  static Future<ApiResult<bool>> createBrand({
+    required String name,
+    String? description,
+    String? logoUrl,
+  }) async {
+    try {
+      final body = <String, dynamic>{
+        'name': name,
+        if (description != null && description.trim().isNotEmpty)
+          'description': description.trim(),
+        if (logoUrl != null && logoUrl.trim().isNotEmpty)
+          'logoUrl': logoUrl.trim(),
+      };
+
+      final response = await ApiService.dio.post(
+        '/api/v1/admin/brands',
+        data: body,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return ApiResult.success(true);
+      }
+      return ApiResult.fail('Tạo thương hiệu thất bại');
+    } catch (e) {
+      return ApiResult.fail(_extractError(e));
+    }
+  }
+
+  static Future<ApiResult<bool>> updateBrand(
+    int brandId, {
+    required String name,
+    String? description,
+    String? logoUrl,
+  }) async {
+    try {
+      final body = <String, dynamic>{
+        'name': name,
+        if (description != null && description.trim().isNotEmpty)
+          'description': description.trim(),
+        if (logoUrl != null && logoUrl.trim().isNotEmpty)
+          'logoUrl': logoUrl.trim(),
+      };
+
+      final response = await ApiService.dio.put(
+        '/api/v1/admin/brands/$brandId',
+        data: body,
+      );
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return ApiResult.success(true);
+      }
+      return ApiResult.fail('Cập nhật thương hiệu thất bại');
+    } catch (e) {
+      return ApiResult.fail(_extractError(e));
+    }
+  }
+
+  static Future<ApiResult<bool>> deleteBrand(int brandId) async {
+    try {
+      final response = await ApiService.dio.delete(
+        '/api/v1/admin/brands/$brandId',
+      );
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return ApiResult.success(true);
+      }
+      return ApiResult.fail('Xóa thương hiệu thất bại');
+    } catch (e) {
+      return ApiResult.fail(_extractError(e));
+    }
+  }
+
   static String _extractError(dynamic e) {
+    final data = (e as dynamic).response?.data;
+    if (data is Map<String, dynamic>) {
+      final msg = data['message']?.toString();
+      if (msg != null && msg.isNotEmpty) return msg;
+      final error = data['error']?.toString();
+      if (error != null && error.isNotEmpty) return error;
+    }
+
     final str = e.toString();
     final match = RegExp(r'"message"\s*:\s*"([^"]+)"').firstMatch(str);
     if (match != null) return match.group(1)!;

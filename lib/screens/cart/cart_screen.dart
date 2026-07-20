@@ -39,27 +39,33 @@ class CartScreen extends StatelessWidget {
                     onPressed: cart.clear,
                     child: Text(
                       'Xóa hết',
-                      style: AppTypography.buttonSm.copyWith(color: AppColors.sale),
+                      style: AppTypography.buttonSm.copyWith(
+                        color: AppColors.sale,
+                      ),
                     ),
                   ),
               ],
             ),
       body: AppBackground(
-        child: cart.isEmpty
-            ? const _EmptyCart()
-            : Column(
-              children: [
-                Expanded(
-                  child: ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                    itemCount: lines.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (_, i) => _CartTile(line: lines[i]),
-                  ),
+        child: SafeArea(
+          top: embedded,
+          bottom: false,
+          child: cart.isEmpty
+              ? const _EmptyCart()
+              : Column(
+                  children: [
+                    Expanded(
+                      child: ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                        itemCount: lines.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
+                        itemBuilder: (_, i) => _CartTile(line: lines[i]),
+                      ),
+                    ),
+                    _CheckoutBar(),
+                  ],
                 ),
-                _CheckoutBar(),
-              ],
-            ),
+        ),
       ),
     );
   }
@@ -113,7 +119,9 @@ class _CartTile extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   p.subtitle,
-                  style: AppTypography.captionSm.copyWith(color: AppColors.mute),
+                  style: AppTypography.captionSm.copyWith(
+                    color: AppColors.mute,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -122,8 +130,9 @@ class _CartTile extends StatelessWidget {
                   children: [
                     Text(
                       Formatters.vnd(p.price),
-                      style: AppTypography.bodyStrong
-                          .copyWith(color: AppColors.accentPinkDeep),
+                      style: AppTypography.bodyStrong.copyWith(
+                        color: AppColors.accentPinkDeep,
+                      ),
                     ),
                     const Spacer(),
                     _QtyStepper(
@@ -166,12 +175,7 @@ class _QtyStepper extends StatelessWidget {
           _QtyBtn(icon: Icons.remove, onTap: onMinus),
           SizedBox(
             width: 28,
-            child: Center(
-              child: Text(
-                '$qty',
-                style: AppTypography.buttonSm,
-              ),
-            ),
+            child: Center(child: Text('$qty', style: AppTypography.buttonSm)),
           ),
           _QtyBtn(icon: Icons.add, onTap: onPlus),
         ],
@@ -236,19 +240,12 @@ class _CheckoutBar extends StatelessWidget {
             highlight: cart.shipping == 0,
           ),
           const Divider(height: 24, color: AppColors.hairlineSoft),
-          _SummaryRow(
-            label: 'Tổng cộng',
-            value: cart.total,
-            isBold: true,
-          ),
+          _SummaryRow(label: 'Tổng cộng', value: cart.total, isBold: true),
           const SizedBox(height: 16),
           Container(
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [
-                  AppColors.gradientStart,
-                  AppColors.accentPinkDeep,
-                ],
+                colors: [AppColors.gradientStart, AppColors.accentPinkDeep],
               ),
               borderRadius: BorderRadius.circular(AppRadius.full),
             ),
@@ -258,9 +255,7 @@ class _CheckoutBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.full),
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const CheckoutScreen(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const CheckoutScreen()),
                   );
                 },
                 child: Padding(
@@ -268,8 +263,9 @@ class _CheckoutBar extends StatelessWidget {
                   child: Center(
                     child: Text(
                       'Thanh toán  •  ${Formatters.vnd(cart.total)}',
-                      style: AppTypography.buttonLg
-                          .copyWith(color: AppColors.onPrimary),
+                      style: AppTypography.buttonLg.copyWith(
+                        color: AppColors.onPrimary,
+                      ),
                     ),
                   ),
                 ),
@@ -309,10 +305,10 @@ class _SummaryRow extends StatelessWidget {
           value == 0 && highlight ? 'Miễn phí' : Formatters.vnd(value),
           style: (isBold ? AppTypography.bodyStrong : AppTypography.bodyMd)
               .copyWith(
-            color: highlight
-                ? AppColors.success
-                : (isBold ? AppColors.ink : AppColors.charcoal),
-          ),
+                color: highlight
+                    ? AppColors.success
+                    : (isBold ? AppColors.ink : AppColors.charcoal),
+              ),
         ),
       ],
     );
@@ -345,8 +341,11 @@ class _EmptyCart extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Text('Giỏ hàng của bạn đang trống',
-                style: AppTypography.headingLg, textAlign: TextAlign.center),
+            Text(
+              'Giỏ hàng của bạn đang trống',
+              style: AppTypography.headingLg,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 8),
             Text(
               'Khám phá thêm sản phẩm và chọn vài món cho thú cưng của bạn nhé.',
@@ -363,8 +362,7 @@ class _EmptyCart extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.full),
                 onTap: () => Navigator.of(context).maybePop(),
                 child: const Padding(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                  padding: EdgeInsets.symmetric(horizontal: 28, vertical: 14),
                   child: Text(
                     'Mua sắm ngay',
                     style: TextStyle(

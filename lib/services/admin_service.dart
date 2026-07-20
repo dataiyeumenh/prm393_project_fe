@@ -112,6 +112,26 @@ class AdminService {
     );
   }
 
+  /// Toggle user lock status (active/inactive) via admin endpoint.
+  static Future<ApiResult<bool>> toggleUserLock(String userId) async {
+    try {
+      final response = await ApiService.dio.put(
+        '/api/v1/admin/users/$userId/lock',
+      );
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return ApiResult.success(true);
+      }
+      return ApiResult.fail(
+        response.data is Map<String, dynamic>
+            ? (response.data['message'] as String? ??
+                  'Failed to toggle account lock status')
+            : 'Failed to toggle account lock status',
+      );
+    } catch (e) {
+      return ApiResult.fail(_extractError(e));
+    }
+  }
+
   // ──────────────────────────────────────────────────────────────
   // Warehouse / Products
   // ──────────────────────────────────────────────────────────────
@@ -202,8 +222,7 @@ class AdminService {
     String productId,
     Map<String, dynamic> updates, {
     MultipartFile? image,
-  }
-  ) async {
+  }) async {
     try {
       if (updates.isEmpty && image == null) {
         return ApiResult.fail('No fields to update');

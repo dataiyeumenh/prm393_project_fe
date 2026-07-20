@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../state/auth_state.dart';
 import '../../theme/app_theme.dart';
+import 'catalog/catalog_screen.dart';
 import 'dashboard/dashboard_screen.dart';
 import 'orders/orders_screen.dart';
 import 'users/users_screen.dart';
@@ -22,6 +23,7 @@ class _AdminShellState extends State<AdminShell> {
     AdminDashboardScreen(),
     AdminOrdersScreen(),
     AdminWarehouseScreen(),
+    AdminCatalogScreen(),
     AdminUsersScreen(),
   ];
 
@@ -29,7 +31,8 @@ class _AdminShellState extends State<AdminShell> {
     _AdminNavItem(icon: Icons.dashboard_rounded, label: 'Tổng quan'),
     _AdminNavItem(icon: Icons.receipt_long_rounded, label: 'Đơn hàng'),
     _AdminNavItem(icon: Icons.inventory_2_rounded, label: 'Kho hàng'),
-    _AdminNavItem(icon: Icons.group_rounded, label: 'Khách hàng'),
+    _AdminNavItem(icon: Icons.category_rounded, label: 'Danh mục'),
+    _AdminNavItem(icon: Icons.group_rounded, label: 'Tài khoản'),
   ];
 
   @override

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../../../models/api/admin_dto.dart';
+import '../../../state/auth_state.dart';
 import '../../../services/admin_service.dart';
 import '../../../theme/app_theme.dart';
 import '../admin_shell.dart';
@@ -18,6 +20,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   final _scrollCtrl = ScrollController();
 
   List<AdminUserDTO> _users = [];
+  final Set<String> _updatingIds = <String>{};
   bool _loading = true;
   bool _hasMore = true;
   int _page = 0;
@@ -84,11 +87,116 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     _fetch(reset: true);
   }
 
+  Future<void> _toggleUserLock(
+    AdminUserDTO user, {
+    required bool isSelf,
+  }) async {
+    if (isSelf) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.sale,
+          content: Text(
+            'Không thể khóa tài khoản của chính bạn',
+            style: AppTypography.captionMd.copyWith(color: AppColors.onPrimary),
+          ),
+        ),
+      );
+      return;
+    }
+
+    final actionLabel = user.active ? 'khóa' : 'mở khóa';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.canvas,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
+        title: Text(
+          '${actionLabel[0].toUpperCase()}${actionLabel.substring(1)} tài khoản?',
+          style: AppTypography.headingMd.copyWith(color: AppColors.ink),
+        ),
+        content: Text(
+          'Bạn có chắc muốn $actionLabel tài khoản ${user.fullName}?',
+          style: AppTypography.bodyMd.copyWith(color: AppColors.mute),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(
+              'Hủy',
+              style: AppTypography.buttonSm.copyWith(color: AppColors.mute),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(
+              actionLabel == 'khóa' ? 'Khóa' : 'Mở khóa',
+              style: AppTypography.buttonSm.copyWith(color: AppColors.sale),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _updatingIds.add(user.id));
+    final result = await AdminService.toggleUserLock(user.id);
+    if (!mounted) return;
+
+    setState(() {
+      _updatingIds.remove(user.id);
+      if (result.isSuccess) {
+        _users = _users.map((u) {
+          if (u.id != user.id) return u;
+          return AdminUserDTO(
+            id: u.id,
+            fullName: u.fullName,
+            email: u.email,
+            phone: u.phone,
+            role: u.role,
+            active: !u.active,
+            createdAt: u.createdAt,
+          );
+        }).toList();
+      }
+    });
+
+    if (result.isSuccess) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.success,
+          content: Text(
+            user.active ? 'Đã khóa tài khoản' : 'Đã mở khóa tài khoản',
+            style: AppTypography.captionMd.copyWith(color: AppColors.onPrimary),
+          ),
+        ),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.sale,
+        content: Text(
+          result.error ?? 'Cập nhật trạng thái tài khoản thất bại',
+          style: AppTypography.captionMd.copyWith(color: AppColors.onPrimary),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final currentUserId = context.select<AuthState, String?>((s) => s.user?.id);
+
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      appBar: AdminAppBar(subtitle: 'Trang quản trị', title: 'Khách hàng'),
+      appBar: AdminAppBar(subtitle: 'Trang quản trị', title: 'Tài khoản'),
       body: Column(
         children: [
           // Search bar
@@ -100,7 +208,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               textInputAction: TextInputAction.search,
               style: AppTypography.bodyMd.copyWith(color: AppColors.ink),
               decoration: InputDecoration(
-                hintText: 'Tìm khách hàng…',
+                hintText: 'Tìm tài khoản…',
                 prefixIcon: const Icon(Icons.search, color: AppColors.mute),
                 suffixIcon: _search.isNotEmpty
                     ? IconButton(
@@ -161,7 +269,31 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                   ),
                                 );
                               }
-                              return _UserCard(user: _users[i]);
+                              final user = _users[i];
+                              final isUpdating = _updatingIds.contains(user.id);
+                              final isSelf =
+                                  currentUserId != null &&
+                                  user.id == currentUserId;
+
+                              return Dismissible(
+                                key: ValueKey(
+                                  'admin-user-${user.id}-${user.active}',
+                                ),
+                                direction: isUpdating
+                                    ? DismissDirection.none
+                                    : DismissDirection.endToStart,
+                                background: const SizedBox.shrink(),
+                                secondaryBackground: _LockActionBackground(
+                                  active: user.active,
+                                  isSelf: isSelf,
+                                  isUpdating: isUpdating,
+                                ),
+                                confirmDismiss: (_) async {
+                                  await _toggleUserLock(user, isSelf: isSelf);
+                                  return false;
+                                },
+                                child: _UserCard(user: user, isSelf: isSelf),
+                              );
                             },
                           ),
                   ),
@@ -175,8 +307,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _UserCard extends StatelessWidget {
-  const _UserCard({required this.user});
+  const _UserCard({required this.user, this.isSelf = false});
+
   final AdminUserDTO user;
+  final bool isSelf;
 
   String _initials(String name) {
     final parts = name.trim().split(' ').where((p) => p.isNotEmpty).toList();
@@ -276,6 +410,26 @@ class _UserCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (isSelf) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
+                        child: Text(
+                          'Bạn',
+                          style: AppTypography.utilityXs.copyWith(
+                            color: AppColors.success,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 3),
@@ -339,6 +493,72 @@ class _UserCard extends StatelessWidget {
   }
 }
 
+class _LockActionBackground extends StatelessWidget {
+  const _LockActionBackground({
+    required this.active,
+    required this.isSelf,
+    required this.isUpdating,
+  });
+
+  final bool active;
+  final bool isSelf;
+  final bool isUpdating;
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = isSelf
+        ? AppColors.stone
+        : active
+        ? AppColors.sale
+        : AppColors.success;
+    final icon = isSelf
+        ? Icons.block_rounded
+        : active
+        ? Icons.lock_outline_rounded
+        : Icons.lock_open_rounded;
+    final label = isUpdating
+        ? 'Đang xử lý'
+        : isSelf
+        ? 'Không thể khóa bạn'
+        : active
+        ? 'Khóa tài khoản'
+        : 'Mở khóa tài khoản';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      alignment: Alignment.centerRight,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          if (isUpdating)
+            const SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.onPrimary,
+              ),
+            )
+          else
+            Icon(icon, color: AppColors.onPrimary),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: AppTypography.captionSm.copyWith(
+              color: AppColors.onPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _EmptyUsers extends StatelessWidget {
   const _EmptyUsers();
 
@@ -356,7 +576,7 @@ class _EmptyUsers extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Chưa tìm thấy khách hàng',
+              'Chưa tìm thấy tài khoản',
               style: AppTypography.headingMd.copyWith(color: AppColors.ash),
             ),
           ],
@@ -393,7 +613,7 @@ class _UsersError extends StatelessWidget {
     final hint = _isAccessDenied
         ? 'Tài khoản của bạn có thể chưa có quyền truy cập endpoint này.'
         : _isEndpointMissing
-        ? 'Endpoint khách hàng chưa sẵn trên backend.'
+        ? 'Endpoint tài khoản chưa sẵn trên backend.'
         : null;
 
     return Center(

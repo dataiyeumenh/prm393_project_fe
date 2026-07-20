@@ -11,6 +11,7 @@ import '../../../services/brand_service.dart';
 import '../../../services/category_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/formatters.dart';
+import '../../product/product_detail_screen.dart';
 import '../admin_shell.dart';
 
 class AdminWarehouseScreen extends StatefulWidget {
@@ -340,6 +341,14 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
     }
   }
 
+  Future<void> _openProductDetail(AdminWarehouseProductDTO product) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ProductDetailScreen(productId: product.id),
+      ),
+    );
+  }
+
   Color _stockColor(StockLevel level) {
     switch (level) {
       case StockLevel.outOfStock:
@@ -548,6 +557,7 @@ class _AdminWarehouseScreenState extends State<AdminWarehouseScreen> {
                                 product: p,
                                 stockColor: _stockColor(p.stockLevel),
                                 stockBg: _stockBg(p.stockLevel),
+                                onTap: () => _openProductDetail(p),
                                 onEdit: () => _openProductEditor(p),
                                 onDelete: () => _confirmDelete(p),
                               );
@@ -568,6 +578,7 @@ class _ProductStockCard extends StatefulWidget {
     required this.product,
     required this.stockColor,
     required this.stockBg,
+    required this.onTap,
     required this.onEdit,
     required this.onDelete,
   });
@@ -575,6 +586,7 @@ class _ProductStockCard extends StatefulWidget {
   final AdminWarehouseProductDTO product;
   final Color stockColor;
   final Color stockBg;
+  final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -648,6 +660,7 @@ class _ProductStockCardState extends State<_ProductStockCard>
     final product = widget.product;
 
     return GestureDetector(
+      onTap: widget.onTap,
       onLongPress: _toggle,
       onHorizontalDragStart: _onDragStart,
       onHorizontalDragUpdate: _onDragUpdate,
@@ -1150,9 +1163,7 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                   isExpanded: true,
                   decoration: const InputDecoration(labelText: 'Danh mục *'),
                   hint: Text(
-                    hasCategories
-                        ? 'Chọn danh mục'
-                        : 'Chưa có danh mục nào',
+                    hasCategories ? 'Chọn danh mục' : 'Chưa có danh mục nào',
                   ),
                   items: widget.categories
                       .map(
@@ -1197,9 +1208,7 @@ class _ProductCreateSheetState extends State<_ProductCreateSheet> {
                   onPressed: _pickingImage ? null : _pickImage,
                   icon: const Icon(Icons.image_outlined),
                   label: Text(
-                    _pickingImage
-                        ? 'Đang chọn ảnh...'
-                        : 'Chọn ảnh đại diện',
+                    _pickingImage ? 'Đang chọn ảnh...' : 'Chọn ảnh đại diện',
                   ),
                 ),
                 if (_imageFileName != null) ...[
