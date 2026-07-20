@@ -50,6 +50,18 @@ class CartService {
     }
   }
 
+  static Future<ApiResult<void>> clearCart() async {
+    try {
+      final response = await ApiService.dio.delete('/api/v1/cart/clear');
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return ApiResult.success(null);
+      }
+      return ApiResult.fail(response.data['message'] ?? 'Failed to clear cart');
+    } catch (e) {
+      return ApiResult.fail(_extractError(e));
+    }
+  }
+
   static String _extractError(dynamic e) {
     if (e is Exception) {
       final str = e.toString();

@@ -36,7 +36,7 @@ class CartScreen extends StatelessWidget {
               actions: [
                 if (!cart.isEmpty)
                   TextButton(
-                    onPressed: cart.clear,
+                    onPressed: cart.clearAll,
                     child: Text(
                       'Xóa hết',
                       style: AppTypography.buttonSm.copyWith(

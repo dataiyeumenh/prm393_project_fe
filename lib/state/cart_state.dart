@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/api/cart_dto.dart';
 import '../models/product.dart';
 import '../services/cart_service.dart';
 
@@ -37,6 +38,7 @@ class CartState extends ChangeNotifier {
     }
     notifyListeners();
     _persist();
+    _syncToServer();
   }
 
   void increment(String productId) {
@@ -45,6 +47,7 @@ class CartState extends ChangeNotifier {
       _lines[i].quantity += 1;
       notifyListeners();
       _persist();
+      _syncToServer();
     }
   }
 
@@ -58,18 +61,67 @@ class CartState extends ChangeNotifier {
     }
     notifyListeners();
     _persist();
+    _syncToServer();
   }
 
   void remove(String productId) {
     _lines.removeWhere((l) => l.product.id == productId);
     notifyListeners();
     _persist();
+    _syncToServer();
   }
 
+  /// Local-only clear. Used on logout and after checkout — the server cart is
+  /// intentionally left untouched (logout keeps it for next login; checkout
+  /// already clears it server-side), so this must NOT push to the server.
   void clear() {
     _lines.clear();
     notifyListeners();
     _persist();
+  }
+
+  /// Clears the cart everywhere (local + server). Used by the "Xóa hết" button
+  /// so an emptied cart stays empty across re-login.
+  void clearAll() {
+    _lines.clear();
+    notifyListeners();
+    _persist();
+    _syncToServer();
+  }
+
+  bool _syncing = false;
+  bool _dirty = false;
+
+  /// Mirrors the current local cart onto the server (`DELETE /cart/clear` then
+  /// re-adds each line) so it survives logout/login and follows the user
+  /// across devices — not just at checkout. Fire-and-forget: the UI updates
+  /// from local state immediately and the server catches up in the background.
+  ///
+  /// Serialized so rapid +/- taps can't race: while a sync is in flight,
+  /// further changes just mark it dirty and one trailing sync runs with the
+  /// latest state.
+  Future<void> _syncToServer() async {
+    _dirty = true;
+    if (_syncing) return;
+    _syncing = true;
+    try {
+      while (_dirty) {
+        _dirty = false;
+        final snapshot = _lines
+            .map((l) =>
+                CartItemRequest(productId: l.product.id, quantity: l.quantity))
+            .toList();
+        final cleared = await CartService.clearCart();
+        if (!cleared.isSuccess) continue;
+        for (final item in snapshot) {
+          await CartService.addToCart(item);
+        }
+      }
+    } catch (_) {
+      // Best-effort: the local + on-disk cart stay the source of truth.
+    } finally {
+      _syncing = false;
+    }
   }
 
   /// Saves the cart to disk so it survives the app process being killed
