@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "770162845999",
+    "project_id": "petfo-64476",
+    "storage_bucket": "petfo-64476.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:770162845999:android:c07d7142f2ff6a27c819da",
+        "android_client_info": {
+          "package_name": "com.example.prm393_project_fe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6b6F_j2I5DRJpccMVXDRdCMfXvgvVlNs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
