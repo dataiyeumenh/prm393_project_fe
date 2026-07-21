@@ -168,18 +168,28 @@ class _HeroCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const Spacer(),
-                  Text(
-                    slide.title,
-                    style: AppTypography.displayCampaign.copyWith(
-                      color: AppColors.onPrimary,
-                      fontSize: 56,
-                      height: 0.95,
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.bottomLeft,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.bottomLeft,
+                        child: Text(
+                          slide.title,
+                          style: AppTypography.displayCampaign.copyWith(
+                            color: AppColors.onPrimary,
+                            fontSize: 48,
+                            height: 0.95,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     slide.body,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: AppTypography.bodyMd.copyWith(
                       color: AppColors.onPrimary,
                       fontWeight: FontWeight.w500,
